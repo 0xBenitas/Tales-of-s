@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tales of Symphonia — Run Tracker</title>
+<style>
+:root {
+  --bg: #0d0f17;
+  --bg-2: #151827;
+  --bg-3: #1d2236;
+  --border: #2a3050;
+  --text: #e6e8f0;
+  --text-dim: #8a91ab;
+  --accent: #c9a14a;
+  --accent-2: #6f8fff;
+  --red: #e25555;
+  --red-bg: #3a1414;
+  --yellow: #e2b855;
+  --yellow-bg: #3a2c0e;
+  --green: #4caf7a;
+  --green-bg: #14361f;
+  --shadow: 0 6px 22px rgba(0,0,0,.45);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.45; }
+body { padding-bottom: 80px; }
+h1, h2, h3 { font-family: "Press Start 2P", "VT323", "Courier New", monospace; letter-spacing: 0.5px; }
+h1 { font-size: 16px; margin: 0; }
+h2 { font-size: 14px; color: var(--accent); margin: 22px 0 10px; text-transform: uppercase; }
+h3 { font-size: 12px; color: var(--text-dim); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+a { color: var(--accent-2); text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; color: var(--text); background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.app-header {
+  position: sticky; top: 0; z-index: 50;
+  background: linear-gradient(180deg, #0d0f17ee 0%, #0d0f17cc 100%);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+}
+.app-header .row { display: flex; align-items: center; gap: 10px; }
+.title-block { flex: 1; min-width: 0; }
+.title-block .sub { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+.icon-btn {
+  background: var(--bg-3); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; min-width: 38px;
+}
+.icon-btn:active { transform: translateY(1px); }
+.spoiler-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.spoiler-toggle input { width: 14px; height: 14px; }
+
+.tabs {
+  display: flex; gap: 4px; overflow-x: auto; padding: 8px 14px 0;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  position: sticky; top: 56px; z-index: 40;
+  -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  background: transparent; border: none; color: var(--text-dim);
+  padding: 10px 12px; border-bottom: 2px solid transparent; font-size: 13px;
+  white-space: nowrap;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+.phase-select-wrap {
+  padding: 10px 14px; background: var(--bg-2); border-bottom: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.phase-select-wrap label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.phase-select-wrap select { flex: 1; min-width: 200px; }
+
+.cutoff-banner {
+  position: sticky; top: 96px; z-index: 35;
+  background: var(--red-bg); border: 1px solid var(--red); border-left: 4px solid var(--red);
+  color: #ffd9d9; padding: 10px 14px; margin: 10px 14px; border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.cutoff-banner .head { font-weight: 700; color: #ff8a8a; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+.cutoff-banner ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.cutoff-banner li { margin: 2px 0; }
+
+main { padding: 14px; max-width: 900px; margin: 0 auto; }
+
+.card {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; margin-bottom: 10px;
+}
+.card.tight { padding: 8px 10px; }
+
+.item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.item:last-child { border-bottom: none; }
+.item .body { flex: 1; min-width: 0; }
+.item .name { font-weight: 600; }
+.item .meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.item .notes { font-size: 12px; color: var(--text); margin-top: 4px; opacity: 0.85; }
+.item.done .name { text-decoration: line-through; color: var(--text-dim); }
+
+.tag {
+  display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;
+  margin-right: 4px;
+}
+.tag.red { background: var(--red-bg); color: #ff8a8a; border: 1px solid var(--red); }
+.tag.yellow { background: var(--yellow-bg); color: #ffd97a; border: 1px solid var(--yellow); }
+.tag.green { background: var(--green-bg); color: #7adfa3; border: 1px solid var(--green); }
+.tag.phase { background: var(--bg-3); color: var(--accent-2); border: 1px solid var(--border); }
+.tag.type { background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border); }
+
+.spoiler-blur {
+  filter: blur(6px); transition: filter .2s; cursor: pointer;
+  background: var(--bg-3); border-radius: 4px; padding: 0 4px;
+}
+.spoiler-blur:hover { filter: blur(2px); }
+.spoilers-on .spoiler-blur { filter: none; cursor: default; background: transparent; padding: 0; }
+
+.affection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.affection-cell {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+}
+.affection-cell .name { font-weight: 700; font-size: 13px; }
+.affection-cell .score { font-family: "Courier New", monospace; font-size: 22px; color: var(--accent); margin: 4px 0; text-align: center; }
+.affection-cell .ctrls { display: flex; gap: 4px; }
+.affection-cell .ctrls button {
+  flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 4px; padding: 4px 0; font-weight: 700;
+}
+.affection-cell .pref { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+.ranking { font-size: 13px; }
+.ranking li { padding: 4px 0; }
+.kratos-flag { padding: 8px; border-radius: 8px; margin-top: 8px; font-weight: 700; text-align: center; }
+.kratos-flag.ok { background: var(--green-bg); color: #7adfa3; border: 1px solid var(--green); }
+.kratos-flag.no { background: var(--red-bg); color: #ff8a8a; border: 1px solid var(--red); }
+
+.cuisine-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cuisine-table th, .cuisine-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.cuisine-table th { color: var(--text-dim); text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+.cuisine-table td.likes { color: #7adfa3; }
+.cuisine-table td.dislikes { color: #ff8a8a; }
+
+.arm-card {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+  margin-bottom: 8px;
+}
+.arm-card .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.arm-card .arm-name { font-weight: 700; }
+.arm-card .arm-owner { font-size: 11px; color: var(--text-dim); }
+.arm-card .loc { font-size: 12px; color: var(--text); margin-top: 6px; opacity: 0.85; }
+.arm-card .kills-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+.arm-card .kills-row input { width: 80px; }
+.arm-card.found { border-color: var(--green); }
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100;
+  display: none; align-items: flex-start; justify-content: center; padding: 60px 14px 14px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+  width: 100%; max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: var(--shadow);
+}
+.modal .search-input {
+  border: none; border-bottom: 1px solid var(--border); border-radius: 10px 10px 0 0;
+  padding: 14px; font-size: 16px; background: transparent;
+}
+.modal .results { overflow-y: auto; flex: 1; }
+.search-result {
+  padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.search-result:hover, .search-result.active { background: var(--bg-3); }
+.search-result .r-name { font-weight: 600; }
+.search-result .r-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+.kbd { font-family: "Courier New", monospace; font-size: 11px; background: var(--bg-3); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; }
+
+.settings-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.btn { background: var(--bg-3); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 14px; }
+.btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.btn.danger { background: var(--red-bg); color: #ff8a8a; border-color: var(--red); }
+
+.section { display: none; }
+.section.active { display: block; }
+
+.progress-bar {
+  height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; margin-top: 6px;
+}
+.progress-bar > div { height: 100%; background: var(--accent); transition: width .3s; }
+
+.note { font-size: 12px; color: var(--text-dim); font-style: italic; }
+
+@media (max-width: 600px) {
+  .tabs { top: 56px; }
+  .cutoff-banner { top: 96px; margin: 8px; }
+  main { padding: 10px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="row">
+    <div class="title-block">
+      <h1>Tales of Symphonia</h1>
+      <div class="sub">Run Tracker · première run anti-spoiler</div>
+    </div>
+    <label class="spoiler-toggle">
+      <input type="checkbox" id="spoilerToggle" />
+      <span>Spoil OK</span>
+    </label>
+    <button class="icon-btn" id="searchBtn" title="Recherche (Cmd+K)">🔍</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="checklist">Checklist</button>
+  <button class="tab" data-tab="affection">Affection</button>
+  <button class="tab" data-tab="arms">Devil's Arms</button>
+  <button class="tab" data-tab="cuisine">Cuisine</button>
+  <button class="tab" data-tab="reference">Référence</button>
+  <button class="tab" data-tab="settings">Réglages</button>
+</nav>
+
+<div class="phase-select-wrap" id="phaseWrap">
+  <label for="phaseSelect">Phase actuelle</label>
+  <select id="phaseSelect"></select>
+  <button class="icon-btn" id="showAllBtn" title="Tout afficher">∞</button>
+</div>
+
+<div id="cutoffBanner"></div>
+
+<main>
+  <section class="section active" id="section-checklist"></section>
+  <section class="section" id="section-affection"></section>
+  <section class="section" id="section-arms"></section>
+  <section class="section" id="section-cuisine"></section>
+  <section class="section" id="section-reference"></section>
+  <section class="section" id="section-settings"></section>
+</main>
+
+<div class="modal-backdrop" id="searchModal">
+  <div class="modal">
+    <input type="text" class="search-input" id="searchInput" placeholder="Rechercher une recette, sidequest, Wonder Chef…" />
+    <div class="results" id="searchResults"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PHASES (ordre chronologique, source : section 10 du guide)
+// ============================================================
+const PHASES = [
+  { id: 'iselia',          name: "Iselia / Temple Martel" },
+  { id: 'triet',           name: "Triet" },
+  { id: 'seal_fire',       name: "Sceau du Feu (Triet Ruins)", boss: "Ktugach + Ktugachling", spoilerBoss: false },
+  { id: 'palmacosta',      name: "Izoold / Palmacosta / Thoda" },
+  { id: 'seal_water',      name: "Sceau de l'Eau (Thoda Geyser)", boss: "Adulocia", spoilerBoss: false },
+  { id: 'asgard',          name: "Hakonesia Peak / Asgard" },
+  { id: 'seal_wind',       name: "Sceau du Vent (Balacruf Mausoleum)", boss: "Iapyx", spoilerBoss: false },
+  { id: 'luin',            name: "Luin" },
+  { id: 'asgard_ranch',    name: "Asgard Human Ranch" },
+  { id: 'tower_mana',      name: "Tower of Mana (Sceau de la Lumière)", boss: "Iubaris", spoilerBoss: false },
+  { id: 'hima',            name: "Hima" },
+  { id: 'iselia_ranch',    name: "⚠️ Iselia Human Ranch — cutoff Disque 1", cutoff: 'd1' },
+  { id: 'tethealla_early', name: "Tethe'alla early (Sybak / Meltokio / Mizuho)" },
+  { id: 'tethealla_mid',   name: "Tethe'alla mid (Ozette / Altamira / Flanoir / Heimdall / Latheon)" },
+  { id: 'late',            name: "Late game (Pacts, Rheairds, Devil's Arms)" },
+  { id: 'welgaia',         name: "⚠️ Welgaia / Derris-Kharlan — cutoff Disque 2", cutoff: 'd2' },
+  { id: 'endgame',         name: "Endgame" },
+];
+const PHASE_INDEX = Object.fromEntries(PHASES.map((p, i) => [p.id, i]));
+
+// ============================================================
+// CUTOFFS (résumé de la section 1 du guide)
+// ============================================================
+const CUTOFFS = {
+  d1: {
+    phaseId: 'iselia_ranch',
+    title: "Cutoff Disque 1 — Iselia Human Ranch",
+    blurb: "Quand tu détruis le Iselia Human Ranch, plein de scènes du \"Faux Élu\" et de l'Anneau de l'Assassin se déclenchent uniquement avant. Repasse dans toutes les villes Sylvarant et parle à tout le monde."
+  },
+  d2: {
+    phaseId: 'welgaia',
+    title: "Cutoff Disque 2 — Welgaia / Derris-Kharlan",
+    blurb: "Première visite à Welgaia. Plusieurs villes deviennent inaccessibles ou détruites avant ça : Palmacosta, Luin, Ozette, Heimdall. Vérifie tes recettes Wonder Chef, sidequests, Anneau de l'Assassin (3e event)."
+  }
+};
+
+// ============================================================
+// ITEMS (checklist universelle — sidequests, missables, tips, titres, recettes, Wonder Chefs, Devil's Arms)
+// Champs :
+//   id            : unique
+//   name          : libellé
+//   type          : 'sidequest' | 'missable' | 'wonderchef' | 'devilarm' | 'recipe' | 'title' | 'tip' | 'item' | 'mechanic'
+//   phase         : phase principale (pour le filtre "vue par phase") — earliest où c'est faisable
+//   availableUntil: phase à partir de laquelle l'item est perdu/inaccessible (optionnel)
+//   missable      : 'red' (perdu sur la save) | 'yellow' (récupérable NG+) | 'green'
+//   cutoff        : 'd1' | 'd2' (si l'item disparaît à ce cutoff) — alimente la banner
+//   location      : où / comment
+//   notes         : détails supplémentaires
+//   spoiler       : true si à blurer en mode anti-spoiler
+// ============================================================
+const ITEMS = [];
+
+// --- Section 5 : Sidequests notables — Disque 1 (avant Iselia Ranch détruit) ---
+ITEMS.push(
+  {
+    id: 'sq_fake_chosen', name: "Faux Élu (Fake Chosen)", type: 'sidequest',
+    phase: 'asgard', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "3 events : Asgard, Balacruf Mausoleum, Luin reconstruite partiellement",
+    notes: "Uniquement pré-Iselia Ranch. Voir aussi : Colette peut VOLER le Faux Élu si elle a une arme élémentaire ou un T-Seal/S-Seal équipé → loot unique."
+  },
+  {
+    id: 'sq_assassin_ring_1', name: "Anneau de l'Assassin — events 1 & 2", type: 'sidequest',
+    phase: 'hima', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "Hima et Fooji Mountains",
+    notes: "Les 2 premiers events doivent être faits avant Iselia Ranch."
+  },
+  {
+    id: 'sq_assassin_ring_3', name: "Anneau de l'Assassin — event 3", type: 'sidequest',
+    phase: 'tethealla_mid', availableUntil: 'welgaia', missable: 'red', cutoff: 'd2',
+    location: "Continue après le cutoff D1, à finaliser avant Welgaia",
+    notes: "Le 3e event s'enchaîne en Tethe'alla mais doit être bouclé avant Welgaia."
+  },
+  {
+    id: 'sq_spiritua_statue', name: "Spiritua Statue → Armure Dorée", type: 'sidequest',
+    phase: 'hima', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "À donner à Koton (Hima) AVANT la Tour du Salut",
+    notes: "Sinon pas d'Armure Dorée en fin de jeu. ⚠️ Critique."
+  },
+  {
+    id: 'sq_palmacosta_dialogues', name: "Recettes & dialogues à Palmacosta", type: 'missable',
+    phase: 'palmacosta', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "Toute Palmacosta",
+    notes: "Avant la destruction de la ville. Voir aussi Wonder Chef École de Palmacosta (Omelet)."
+  },
+  {
+    id: 'sq_drague_palmacosta', name: "Draguer les filles à Palmacosta", type: 'missable',
+    phase: 'palmacosta', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "Palmacosta",
+    notes: "Avec Lloyd ou Zelos → titres + items. (Section 8 du guide.)"
+  },
+  {
+    id: 'sq_black_white_silver', name: "Black Silver / White Silver", type: 'item',
+    phase: 'asgard_ranch', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "Farmer / voler dans Balacruf Mausoleum et Tower of Mana",
+    notes: "Matériaux de craft. Avant que ces donjons deviennent inaccessibles."
+  }
+);
+
+// --- Sidequests Mid-game (Tethe'alla) ---
+ITEMS.push(
+  {
+    id: 'sq_dairy_virginia', name: "Dairy de Virginia", type: 'sidequest',
+    phase: 'tethealla_mid', availableUntil: 'welgaia', missable: 'red', cutoff: 'd2',
+    location: "Tethe'alla mid",
+    notes: "À faire avant la 1ère visite à Derris-Kharlan."
+  },
+  {
+    id: 'sq_presea_exspheres', name: "Presea apprend pour les Exspheres", type: 'sidequest',
+    phase: 'tethealla_mid', availableUntil: 'welgaia', missable: 'red', cutoff: 'd2',
+    location: "Tethe'alla mid",
+    notes: "Avant Welgaia (probablement)."
+  },
+  {
+    id: 'sq_swimsuits_altamira', name: "Costumes maillots de bain (Altamira)", type: 'sidequest',
+    phase: 'tethealla_mid', missable: 'yellow',
+    location: "Altamira",
+    notes: "Seulement Lloyd + les 2 affections les plus hautes les portent."
+  },
+  {
+    id: 'sq_drague_ozette', name: "Draguer les filles à Ozette", type: 'missable',
+    phase: 'tethealla_mid', availableUntil: 'welgaia', missable: 'red', cutoff: 'd2',
+    location: "Ozette",
+    notes: "Avec Lloyd ou Zelos → titres + items. (Section 8.) Ozette est détruit avant Welgaia."
+  },
+  {
+    id: 'sq_heimdall_recipes', name: "Recettes manquantes à Heimdall", type: 'missable',
+    phase: 'tethealla_mid', availableUntil: 'welgaia', missable: 'red', cutoff: 'd2',
+    location: "Maison de l'Ancien à Heimdall",
+    notes: "Une recette s'y perd à la destruction de la ville."
+  }
+);
+
+// --- Sidequests Late game ---
+ITEMS.push(
+  {
+    id: 'sq_devil_arms_complete', name: "Devil's Arms — collection complète", type: 'sidequest',
+    phase: 'late', missable: 'green',
+    location: "9 armes (cf. onglet Devil's Arms)",
+    notes: "Voir l'onglet dédié."
+  },
+  {
+    id: 'sq_mystic_artes', name: "Mystic Artes (déblocage)", type: 'sidequest',
+    phase: 'late', missable: 'green',
+    location: "Nécessite EX Skills spécifiques équipés en combo",
+    notes: "Cachées dans Niflheim aussi."
+  },
+  {
+    id: 'sq_niflheim', name: "Niflheim (donjon optionnel)", type: 'sidequest',
+    phase: 'late', missable: 'green',
+    location: "Se débloque avant le boss final",
+    notes: "Contient les Mystic Artes cachées. Tip : controller turbo sur un étage à respawn = grade infini."
+  },
+  {
+    id: 'sq_maxwell', name: "Maxwell (Summon Spirit optionnel)", type: 'sidequest',
+    phase: 'late', missable: 'green',
+    location: "Donjon caché",
+    notes: "Pact optionnel."
+  }
+);
+
+// --- Section 8 : Trucs faciles à oublier ---
+ITEMS.push(
+  {
+    id: 'tip_dog_lover', name: "Renommer tous les chiens (Dog Lover)", type: 'title',
+    phase: 'iselia', missable: 'yellow',
+    location: "Chaque ville, avec Colette en perso à l'écran",
+    notes: "Titre Dog Lover pour Colette → +4 INT/EVA/ACC."
+  },
+  {
+    id: 'tip_steal_fake_chosen', name: "Voler le Faux Élu avec Colette", type: 'tip',
+    phase: 'asgard', availableUntil: 'iselia_ranch', missable: 'red', cutoff: 'd1',
+    location: "Pendant les events Faux Élu",
+    notes: "Colette + arme élémentaire OU T-Seal/S-Seal équipé → loot unique."
+  },
+  {
+    id: 'tip_memory_circles', name: "Memory Circles — Memory Gems", type: 'tip',
+    phase: 'iselia', missable: 'yellow',
+    location: "Dispersés dans donjons et après combats clés",
+    notes: "Tu en trouveras au fil du jeu, à ne pas oublier."
+  },
+  {
+    id: 'tip_save_often', name: "Sauvegarder constamment", type: 'tip',
+    phase: 'iselia', missable: 'green',
+    location: "Partout",
+    notes: "Pas d'auto-save. Certaines sidequests ont des points de non-retour non annoncés."
+  },
+  {
+    id: 'tip_turbo_niflheim', name: "Tip turbo controller à Niflheim", type: 'tip',
+    phase: 'late', missable: 'green',
+    location: "Niflheim, étage où les ennemis respawnent",
+    notes: "Mettre Lloyd sur le spawn, scotcher la touche A avec un controller turbo → grade infini sans rien faire."
+  }
+);
+
+// --- Mécanique : Sheena rejoint plus tôt à Luin ---
+ITEMS.push(
+  {
+    id: 'mech_sheena_luin', name: "Sheena rejoint plus tôt (à Luin)", type: 'mechanic',
+    phase: 'luin', missable: 'yellow',
+    location: "Luin",
+    notes: "Si l'affection d'un perso est assez haute, Sheena rejoint à Luin. Sinon plus tard à l'Asgard Ranch."
+  }
+);
+
+// ============================================================
+// WONDER CHEFS (24 recettes — section 4 du guide)
+// Le doc cite explicitement 18 emplacements + 6 secondaires implicites
+// (les positions exactes des slots restants varient selon les sources, je
+// liste tout ce qui est dans le .md + slots génériques pour atteindre 24).
+// ============================================================
+const WONDER_CHEFS = [
+  { id: 'wc_triet',       city: "Triet",     missable: 'green',  cutoff: null, phase: 'triet',
+    disguise: "Lampe-tortue", recipe: "Cabbage Rolls",
+    location: "Auberge, 2e étage, fond du couloir" },
+  { id: 'wc_izoold',      city: "Izoold",    missable: 'green',  cutoff: null, phase: 'palmacosta',
+    disguise: "Pélican en bois", recipe: "Rice Ball",
+    location: "Maison à côté du Katz Expedition, coin droit" },
+  { id: 'wc_palmacosta',  city: "Palmacosta", missable: 'red',    cutoff: 'd1', phase: 'palmacosta',
+    disguise: "Panier de balles", recipe: "Omelet",
+    location: "École, sous l'escalier — DÉTRUIT avec la ville" },
+  { id: 'wc_asgard',      city: "Asgard",    missable: 'green',  cutoff: null, phase: 'asgard',
+    disguise: "Phonographe", recipe: "Meat Stew",
+    location: "Maison d'Aisha, 2e étage à côté du lit" },
+  { id: 'wc_hima',        city: "Hima",      missable: 'green',  cutoff: null, phase: 'hima',
+    disguise: "Marmite fumante", recipe: "Risotto",
+    location: "Auberge, à gauche de la cheminée" },
+  { id: 'wc_luin',        city: "Luin",      missable: 'red',    cutoff: 'd2', phase: 'luin',
+    disguise: "Cochon-vapeur rose", recipe: "Seafood Stew",
+    location: "Magasin d'objets, à gauche du comptoir — Luin est détruit avant Welgaia" },
+  { id: 'wc_meltokio_armor', city: "Meltokio", missable: 'green', cutoff: null, phase: 'tethealla_early',
+    disguise: "Maneki-neko", recipe: "Steak",
+    location: "Armurerie, vitrine fond gauche" },
+  { id: 'wc_meltokio_zelos', city: "Meltokio", missable: 'green', cutoff: null, phase: 'tethealla_early',
+    disguise: "Cadeau avec chapeau de chef", recipe: "Fruit Cocktail",
+    location: "Maison de Zelos, 2e étage" },
+  { id: 'wc_sybak',       city: "Sybak",     missable: 'green',  cutoff: null, phase: 'tethealla_early',
+    disguise: "Magazine", recipe: "(recette Sybak)",
+    location: "Bibliothèque, entre deux étagères" },
+  { id: 'wc_mizuho',      city: "Mizuho",    missable: 'green',  cutoff: null, phase: 'tethealla_early',
+    disguise: "Piège à animaux", recipe: "(recette Mizuho)",
+    location: "Hutte du chef" },
+  { id: 'wc_altamira',    city: "Altamira",  missable: 'green',  cutoff: null, phase: 'tethealla_mid',
+    disguise: "(objet 4e étage hôtel)", recipe: "(recette Altamira)",
+    location: "Hôtel, 4e étage" },
+  { id: 'wc_exire',       city: "Exire",     missable: 'green',  cutoff: null, phase: 'tethealla_mid',
+    disguise: "Maquette de Rheaird", recipe: "(recette Exire)",
+    location: "Maison à 3 étages, étage du milieu" },
+  { id: 'wc_dirk',        city: "Maison de Dirk", missable: 'yellow', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Mangeoire à oiseaux", recipe: "(recette Dirk)",
+    location: "Chambre de Lloyd, après retour en Sylvarant" },
+  { id: 'wc_tabitha',     city: "Chez Altessa (Tabitha)", missable: 'yellow', cutoff: null, phase: 'tethealla_mid',
+    disguise: "—", recipe: "(recette Tabitha)",
+    location: "Story-related, parler à Tabitha au bon moment" },
+  // --- Recettes Regal-only (post-destruction de Heimdall) ---
+  { id: 'wc_regal_asgard', city: "Asgard (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "(Regal-only)", recipe: "(recette Regal Asgard)",
+    location: "Devant le moulin — Regal en perso à l'écran, après destruction de Heimdall" },
+  { id: 'wc_regal_meltokio', city: "Meltokio (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "(Regal-only)", recipe: "(recette Regal Meltokio)",
+    location: "Devant les portes du château — Regal en perso, après destruction de Heimdall" },
+  { id: 'wc_regal_hog_sw', city: "House of Guidance SO (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "(Regal-only)", recipe: "(recette Regal HoG SO)",
+    location: "House of Guidance sud-ouest — Regal en perso, après destruction de Heimdall" },
+  { id: 'wc_regal_hog_se', city: "House of Guidance SE (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "(Regal-only)", recipe: "(recette Regal HoG SE)",
+    location: "House of Guidance sud-est — Regal en perso, après destruction de Heimdall" },
+  // --- Slots additionnels pour atteindre les 24 (positions à confirmer en jeu, le .md liste 24 recettes mais détaille moins de slots) ---
+  { id: 'wc_slot_19', city: "Slot 19 (à confirmer)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+  { id: 'wc_slot_20', city: "Slot 20 (à confirmer)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+  { id: 'wc_slot_21', city: "Slot 21 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+  { id: 'wc_slot_22', city: "Slot 22 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+  { id: 'wc_slot_23', city: "Slot 23 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+  { id: 'wc_slot_24', city: "Slot 24 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "—", recipe: "(recette additionnelle)",
+    location: "Position à vérifier en jeu (Aselia Wiki)" },
+];
+
+// Sidequest Wonder Chef finale
+ITEMS.push({
+  id: 'wc_dark_chef_duel', name: "Dark Chef — duel Beef Stew (Regal)", type: 'sidequest',
+  phase: 'late', missable: 'yellow',
+  location: "Meltokio",
+  notes: "Le Dark Chef défie Regal en duel de Beef Stew → titre God of the Kitchen + costume cuisinier pour Regal."
+});
+
+// Pousse chaque Wonder Chef dans la checklist universelle
+WONDER_CHEFS.forEach(wc => {
+  ITEMS.push({
+    id: wc.id,
+    name: `Wonder Chef · ${wc.city}`,
+    type: 'wonderchef',
+    phase: wc.phase,
+    availableUntil: wc.cutoff === 'd1' ? 'iselia_ranch' : (wc.cutoff === 'd2' ? 'welgaia' : null),
+    missable: wc.missable,
+    cutoff: wc.cutoff,
+    location: wc.location,
+    notes: `Déguisement : ${wc.disguise} → recette : ${wc.recipe}`
+  });
+});
+
+// ============================================================
+// DEVIL'S ARMS (9 — section 3 du guide)
+// ============================================================
+const DEVIL_ARMS = [
+  { id: 'da_nebilim', name: "Nebilim", weapon: "twin blades", owner: "Lloyd",
+    location: "Donné par Abyssion à Flanoir (à droite de l'auberge)",
+    notes: "Reçu en même temps que Nebilim's Key (ouvre les coffres noirs)." },
+  { id: 'da_evil_eye', name: "Evil Eye", weapon: "chakrams", owner: "Colette",
+    location: "Toize Valley Mine — casser le Bacura, prendre l'ascenseur en bas, examiner les débris",
+    notes: "Déclencheur de la sidequest Devil's Arms : il faut prendre Evil Eye AVANT de parler à Abyssion." },
+  { id: 'da_fafnir', name: "Fafnir", weapon: "dague", owner: "Kratos / Zelos",
+    location: "Forêt de Gaoracchia — coffre caché dans un buisson",
+    notes: "Repérable au Sorcerer's Ring lumineux." },
+  { id: 'da_soul_eater', name: "Soul Eater", weapon: "épée", owner: "Kratos / Zelos",
+    location: "Triet — parler aux 2 mecs qui parlent du Sand Worm, puis cercle lumineux sur la worldmap",
+    notes: "Boss : Sand Worm." },
+  { id: 'da_diablos', name: "Diablos", weapon: "hache", owner: "Presea",
+    location: "Latheon Gorge, 2e écran, descendre les rampes",
+    notes: "" },
+  { id: 'da_apocalypse', name: "Apocalypse", weapon: "gantelets", owner: "Regal",
+    location: "Welgaia, 1er étage du grand bâtiment",
+    notes: "⚠️ Welgaia = cutoff D2 — récupère-la pendant ta visite, pas après." },
+  { id: 'da_gates_hell', name: "Gates of Hell", weapon: "cartes", owner: "Sheena",
+    location: "Après Temple de la Terre, parler à la Gnomette chez Altessa, retour au Temple, coffre tout à droite au niveau du dragon",
+    notes: "" },
+  { id: 'da_disaster', name: "Disaster", weapon: "kendama", owner: "Genis",
+    location: "Altamira de nuit (après les events Alicia/Lezareno) → casino/théâtre, mec sur le pont",
+    notes: "1000 Gald (ou 250 chips au casino selon version)." },
+  { id: 'da_heart_chaos', name: "Heart of Chaos", weapon: "bâton", owner: "Raine",
+    location: "Récupérée en dernier : avec les 8 autres en main, retour à Flanoir, parler à Abyssion → cinématique → Koton à Hima donne le dernier",
+    notes: "Boss final de la sidequest : Abyssion au Temple de l'Ombre, dernier étage (sceau de Shadow). 120 000 HP. Préparer les Life Bottles." }
+];
+
+// Pousse aussi les Devil's Arms en items checklist (pour search global et filtre par phase)
+ITEMS.push({
+  id: 'da_trigger', name: "Devil's Arms — déclencheur", type: 'sidequest',
+  phase: 'tethealla_mid', missable: 'green',
+  location: "1) Casser le Bacura à Toize Valley Mine → Evil Eye (Colette). 2) Aller à Flanoir, parler à Abyssion → reçoit Nebilim (Lloyd) + Nebilim's Key.",
+  notes: "Sans la Key, impossible d'ouvrir les coffres noirs."
+});
+DEVIL_ARMS.forEach(da => {
+  ITEMS.push({
+    id: 'item_' + da.id,
+    name: `Devil's Arm · ${da.name} (${da.owner})`,
+    type: 'devilarm',
+    phase: da.id === 'da_apocalypse' ? 'welgaia' : (da.id === 'da_heart_chaos' ? 'late' : 'tethealla_mid'),
+    availableUntil: da.id === 'da_apocalypse' ? 'welgaia' : null,
+    missable: da.id === 'da_apocalypse' ? 'red' : 'green',
+    cutoff: da.id === 'da_apocalypse' ? 'd2' : null,
+    location: da.location,
+    notes: da.notes
+  });
+});
+
+// ============================================================
+// PRÉFÉRENCES CUISINE (section 2 du guide)
+// ============================================================
+const CUISINE_PREFS = [
+  { char: 'Lloyd',   likes: "Bœuf (pas Émincé)",          dislikes: "Tomate" },
+  { char: 'Colette', likes: "Tous les fruits",            dislikes: "Poivron" },
+  { char: 'Genis',   likes: "Lait",                       dislikes: "Carotte" },
+  { char: 'Raine',   likes: "Citron",                     dislikes: "Champignon" },
+  { char: 'Sheena',  likes: "Riz (pas Orge)",             dislikes: "—" },
+  { char: 'Zelos',   likes: "Thon, Daurade, Melon",       dislikes: "Poulpe" },
+  { char: 'Presea',  likes: "—",                          dislikes: "—" },
+  { char: 'Regal',   likes: "Tofu",                       dislikes: "Concombre, Melon" },
+  { char: 'Kratos',  likes: "Thon",                       dislikes: "Tomate" },
+];
+
+// ============================================================
+// AFFECTION — personnages (section 2 du guide)
+// ============================================================
+const AFFECTION_CHARS = [
+  { id: 'kratos',  name: "Kratos",  pref: "Aime Thon · déteste Tomate · cyniques/sérieuses" },
+  { id: 'zelos',   name: "Zelos",   pref: "Aime Thon, Daurade, Melon · déteste Poulpe" },
+  { id: 'colette', name: "Colette", pref: "Aime tous les fruits · déteste Poivron" },
+  { id: 'genis',   name: "Genis",   pref: "Aime Lait · déteste Carotte" },
+  { id: 'raine',   name: "Raine",   pref: "Aime Citron · déteste Champignon" },
+  { id: 'sheena',  name: "Sheena",  pref: "Aime Riz (pas Orge)" },
+  { id: 'presea',  name: "Presea",  pref: "Skits +120 pts" },
+  { id: 'regal',   name: "Regal",   pref: "Aime Tofu · déteste Concombre/Melon · skits +180 pts" },
+];
+
+// Seuil arbitraire à partir duquel "Kratos rejoignable" passe au vert
+// (le guide ne donne pas de chiffre exact ; ajuste à la main si tu veux)
+const KRATOS_THRESHOLD = 50;
+
+// ============================================================
+// EX SKILLS — recommandations première run (section 6)
+// ============================================================
+const EX_SKILLS_RECO = [
+  { char: "Lloyd",  reco: "Strike",    note: "Meilleurs Tech globalement." },
+  { char: "Genis",  reco: "Technical", note: "" },
+  { char: "Raine",  reco: "Technical", note: "Heals AoE." },
+  { char: "Presea", reco: "Technical", note: "" },
+  { char: "Sheena", reco: "(au choix)", note: "Strike vs Technical change l'arbre de Tech." },
+  { char: "Colette",reco: "(au choix)", note: "" },
+  { char: "Zelos",  reco: "(au choix)", note: "" },
+  { char: "Regal",  reco: "(au choix)", note: "" },
+  { char: "Kratos", reco: "(au choix)", note: "Pendant les heures où il est dans la team." },
+];
+const EX_SKILLS_NOTES = [
+  "Chaque perso a 4 slots d'EX Skills (1 par niveau de gem : Lv1, Lv2, Lv3, Lv4).",
+  "Une gem équipée ne peut pas être retirée, seulement DÉTRUITE. Réfléchir avant.",
+  "Les EX Skills déterminent quel arbre de Tech tu débloques (Strike vs Technical).",
+  "Combos d'EX Skills = compound EX Skills (ex : Super Blast pour Lloyd qui régen TP en attaquant)."
+];
+
+// ============================================================
+// GRADE SHOP — options NG+ (section 7)
+// ============================================================
+const GRADE_SHOP = [
+  { option: "Affection",         cost: 10,    reco: "✅" },
+  { option: "Cooking Ability",   cost: 50,    reco: "✅" },
+  { option: "Recipes",           cost: 50,    reco: "✅" },
+  { option: "Titles",            cost: 1000,  reco: "✅ si full collection visée" },
+  { option: "EX Gems",           cost: 600,   reco: "✅ (récupère la EX Gem MAX du boss final)" },
+  { option: "EX Skills",         cost: 400,   reco: "✅" },
+  { option: "Techs",             cost: 1000,  reco: "✅" },
+  { option: "Tech Usage",        cost: 25,    reco: "✅ tjrs" },
+  { option: "Inherit Exspheres", cost: "variable", reco: "✅" },
+  { option: "2x EXP",            cost: 1000,  reco: "éventuellement" },
+  { option: "Grade Increase",    cost: 100,   reco: "✅ pour spirale NG+" },
+  { option: "Max HP +500",       cost: 250,   reco: "nice to have" },
+];
+
+// ============================================================
+// CHOIX KRATOS / ZELOS (section 9 — SPOILER)
+// ============================================================
+const KRATOS_ZELOS_LORE = {
+  spoiler: true,
+  blurb: "Pendant les premières heures où Kratos est dans la team, choisis les réponses cyniques/sérieuses, donne-lui à manger du thon, évite la tomate. À l'auberge de Flanoir (fin de jeu) les 3 persos avec la plus haute affection viennent te parler — refuser les 3 visiteurs déclenche la venue de Kratos à ta fenêtre, MAIS il faut que son affection ait été assez haute quand il était dans ta team au début. Faire revenir Kratos = Zelos meurt / quitte définitivement.",
+  lore: [
+    "À l'origine, Zelos était écrit pour mourir si son affection n'était pas la plus haute.",
+    "Le scénariste Takumi Miyajima a confirmé que Kratos a été ajouté tardivement comme alternative.",
+    "Route Zelos vivant + Kratos pas dans la team = canon \"officiel\" originellement prévu.",
+    "Route Kratos rejoint = Zelos meurt définitivement (trahison + duel final).",
+    "Beaucoup de fans recommandent en première run : garder Zelos. Kratos est jouable au NG+."
+  ]
+};
+
+// ============================================================
+// MÉCANIQUE AFFECTION — résumé (section 2)
+// ============================================================
+const AFFECTION_MECHANICS = [
+  "Choix de dialogue de Lloyd = le plus gros impact.",
+  "Skits (bulles d'oreille sur la map) → +60 pts en moyenne, +120 pour Presea, +180 pour Regal.",
+  "Cuisine : chaque perso aime/déteste certains ingrédients (±1 par plat).",
+  "Sidequests dédiées.",
+  "Scène à l'auberge de Flanoir (fin de jeu) : les 3 persos avec la plus haute affection viennent te parler. Tu peux choisir avec qui discuter — c'est ton soulmate.",
+  "Sheena rejoint plus tôt à Luin si l'affection d'un perso est assez haute, sinon plus tard à l'Asgard Ranch."
+];
+
+// ============================================================
+// ORDRE CHRONOLOGIQUE DES SCEAUX (section 10 du guide)
+// ============================================================
+const STORY_ORDER = [
+  { step: 1,  label: "Iselia → Temple Martel → Triet", boss: null },
+  { step: 2,  label: "Sceau du Feu (Triet Ruins)",     boss: "Ktugach + Ktugachling", spoilerBoss: false },
+  { step: 3,  label: "Izoold → Palmacosta → Thoda Geyser", boss: null },
+  { step: 4,  label: "Sceau de l'Eau",                 boss: "Adulocia",  spoilerBoss: false },
+  { step: 5,  label: "Hakonesia Peak → Asgard",        boss: null },
+  { step: 6,  label: "Sceau du Vent (Balacruf Mausoleum)", boss: "Iapyx", spoilerBoss: false },
+  { step: 7,  label: "Luin → Asgard Human Ranch",      boss: null },
+  { step: 8,  label: "Tower of Mana — Sceau de la Lumière", boss: "Iubaris", spoilerBoss: false },
+  { step: 9,  label: "Hima → Iselia Human Ranch (⚠️ cutoff Disque 1)", boss: null },
+  { step: 10, label: "Tour du Salut → ouverture Tethe'alla", boss: null },
+  { step: 11, label: "Mid-game Tethe'alla : Sybak, Meltokio, Mizuho, Ozette, Altamira, Flanoir, Heimdall, Latheon Gorge…", boss: null },
+  { step: 12, label: "Pacts avec les Summon Spirits restants", boss: null, spoilerBoss: true },
+  { step: 13, label: "Récupération des Rheairds (vraie liberté de map)", boss: null },
+  { step: 14, label: "Préparation finale : Devil's Arms, Niflheim, Maxwell", boss: null, spoilerBoss: true },
+  { step: 15, label: "Welgaia / Derris-Kharlan → fin (⚠️ cutoff Disque 2)", boss: null, spoilerBoss: true },
+];
+
+// ============================================================
+// SOURCES (mention dans la section "Référence")
+// ============================================================
+const SOURCES = [
+  "GameFAQs Walkthrough (Kratos15354) — référence Chronicles",
+  "Aselia Wiki (Affinity, Devil's Arms, Wonder Chef)",
+  "TheGamer Tales of Symphonia Remastered guides (2023)",
+  "Phaelin's Affection Guide (GameFAQs, vintage mais référence)",
+  "Ket_Shi's Devil's Arms FAQ (GameFAQs)",
+  "BeforeIPlay community wiki"
+];
+
+// ============================================================
+// STATE & PERSISTENCE
+// ============================================================
+const LS_KEY = 'tos_run_tracker_v1';
+
+const defaultState = () => ({
+  checked: {},                  // { itemId: true }
+  affection: Object.fromEntries(AFFECTION_CHARS.map(c => [c.id, 0])),
+  arms: Object.fromEntries(DEVIL_ARMS.map(a => [a.id, { found: false, kills: 0 }])),
+  spoilersOk: false,
+  currentPhase: 'iselia',
+  currentTab: 'checklist',
+  showAll: false,
+});
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed, {
+      affection: Object.assign(defaultState().affection, parsed.affection || {}),
+      arms:      Object.assign(defaultState().arms,      parsed.arms      || {}),
+      checked:   Object.assign({},                       parsed.checked   || {}),
+    });
+  } catch (e) {
+    console.warn('loadState error', e);
+    return defaultState();
+  }
+}
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn('saveState error', e); }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'html') node.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else if (v === false || v == null) continue;
+    else if (v === true) node.setAttribute(k, '');
+    else node.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+function phaseIdx(id) { return PHASE_INDEX[id] ?? -1; }
+function phaseName(id) { return (PHASES.find(p => p.id === id) || {}).name || id; }
+function isAvailableInPhase(item, phaseId) {
+  // si l'item a une phase d'apparition, il faut être >= cette phase
+  const start = item.phase ? phaseIdx(item.phase) : 0;
+  const end   = item.availableUntil ? phaseIdx(item.availableUntil) : PHASES.length - 1;
+  const cur   = phaseIdx(phaseId);
+  return cur >= start && cur <= end;
+}
+function missableTag(level) {
+  if (level === 'red')    return el('span', { class: 'tag red' }, '🔴 missable');
+  if (level === 'yellow') return el('span', { class: 'tag yellow' }, '🟡 NG+');
+  if (level === 'green')  return el('span', { class: 'tag green' }, '🟢 ok');
+  return null;
+}
+function typeLabel(t) {
+  return ({
+    sidequest:  "Sidequest",
+    missable:   "Missable",
+    wonderchef: "Wonder Chef",
+    devilarm:   "Devil's Arm",
+    recipe:     "Recette",
+    title:      "Titre",
+    tip:        "Astuce",
+    item:       "Objet",
+    mechanic:   "Mécanique",
+  })[t] || t;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]);
+}
+
+// ============================================================
+// RENDER : CHECKLIST (filtrée par phase, ou tout)
+// ============================================================
+function renderChecklist() {
+  const root = document.getElementById('section-checklist');
+  root.innerHTML = '';
+
+  const filtered = state.showAll
+    ? ITEMS.slice()
+    : ITEMS.filter(i => isAvailableInPhase(i, state.currentPhase));
+
+  // Progression globale
+  const total = ITEMS.length;
+  const done  = ITEMS.filter(i => state.checked[i.id]).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+  const progress = el('div', { class: 'card tight' },
+    el('div', { class: 'note' }, `Progression globale : ${done} / ${total} (${pct}%)`),
+    el('div', { class: 'progress-bar' }, el('div', { style: `width:${pct}%` }))
+  );
+  root.appendChild(progress);
+
+  // Groupement par type
+  const groups = {};
+  filtered.forEach(i => {
+    const k = i.type;
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(i);
+  });
+
+  const order = ['sidequest','missable','wonderchef','devilarm','title','tip','item','recipe','mechanic'];
+  const keys = Object.keys(groups).sort((a,b) => (order.indexOf(a) - order.indexOf(b)));
+
+  if (filtered.length === 0) {
+    root.appendChild(el('div', { class: 'card' },
+      el('div', { class: 'note' }, "Rien à faire de spécifique pour cette phase. Bouge-toi sur la story 🤘")
+    ));
+    return;
+  }
+
+  keys.forEach(k => {
+    const card = el('div', { class: 'card' });
+    card.appendChild(el('h2', {}, typeLabel(k) + ` (${groups[k].length})`));
+    groups[k].forEach(item => card.appendChild(renderItemRow(item)));
+    root.appendChild(card);
+  });
+}
+
+function renderItemRow(item) {
+  const checked = !!state.checked[item.id];
+  const cb = el('input', { type: 'checkbox' });
+  cb.checked = checked;
+  cb.addEventListener('change', () => {
+    if (cb.checked) state.checked[item.id] = true;
+    else delete state.checked[item.id];
+    saveState();
+    row.classList.toggle('done', cb.checked);
+    // refresh pour la barre de progression
+    refreshProgressBar();
+  });
+
+  const tags = el('div', {}, missableTag(item.missable));
+  if (item.cutoff) tags.appendChild(el('span', { class: 'tag red' }, item.cutoff === 'd1' ? 'Cutoff D1' : 'Cutoff D2'));
+  if (item.phase) tags.appendChild(el('span', { class: 'tag phase' }, phaseName(item.phase)));
+  tags.appendChild(el('span', { class: 'tag type' }, typeLabel(item.type)));
+
+  const body = el('div', { class: 'body' },
+    el('div', { class: 'name' }, item.name),
+    tags,
+    item.location ? el('div', { class: 'meta' }, '📍 ' + item.location) : null,
+    item.notes ? el('div', { class: 'notes' }, item.notes) : null
+  );
+
+  const row = el('div', { class: 'item' + (checked ? ' done' : '') }, cb, body);
+  return row;
+}
+
+function refreshProgressBar() {
+  const total = ITEMS.length;
+  const done  = ITEMS.filter(i => state.checked[i.id]).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+  const note  = document.querySelector('#section-checklist .card.tight .note');
+  const bar   = document.querySelector('#section-checklist .card.tight .progress-bar > div');
+  if (note) note.textContent = `Progression globale : ${done} / ${total} (${pct}%)`;
+  if (bar)  bar.style.width = pct + '%';
+}
+
+// ============================================================
+// PHASE SELECTOR
+// ============================================================
+function renderPhaseSelector() {
+  const sel = document.getElementById('phaseSelect');
+  sel.innerHTML = '';
+  PHASES.forEach((p, i) => {
+    const opt = el('option', { value: p.id }, `${i + 1}. ${p.name}`);
+    if (p.id === state.currentPhase) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    state.currentPhase = sel.value;
+    state.showAll = false;
+    saveState();
+    renderAll();
+  };
+
+  const btn = document.getElementById('showAllBtn');
+  btn.onclick = () => {
+    state.showAll = !state.showAll;
+    btn.style.background = state.showAll ? 'var(--accent)' : '';
+    btn.style.color = state.showAll ? '#000' : '';
+    saveState();
+    renderChecklist();
+  };
+  btn.style.background = state.showAll ? 'var(--accent)' : '';
+  btn.style.color = state.showAll ? '#000' : '';
+  btn.title = state.showAll ? "Filtrer par phase courante" : "Tout afficher";
+}
+
+// ============================================================
+// CUTOFF BANNER
+// ============================================================
+function renderCutoffBanner() {
+  const root = document.getElementById('cutoffBanner');
+  root.innerHTML = '';
+  const phase = PHASES.find(p => p.id === state.currentPhase);
+  if (!phase || !phase.cutoff) return;
+
+  const cutoff = CUTOFFS[phase.cutoff];
+  // Tout ce qui disparaît à ce cutoff (et pas encore coché)
+  const losing = ITEMS.filter(i => i.cutoff === phase.cutoff && !state.checked[i.id]);
+
+  const banner = el('div', { class: 'cutoff-banner' });
+  banner.appendChild(el('div', { class: 'head' }, '⚠️ ' + cutoff.title));
+  banner.appendChild(el('div', {}, cutoff.blurb));
+
+  if (losing.length) {
+    banner.appendChild(el('div', { class: 'head', style: 'margin-top:8px;font-size:11px' }, `Encore à faire (${losing.length}) :`));
+    const ul = el('ul');
+    losing.forEach(i => ul.appendChild(el('li', {}, i.name)));
+    banner.appendChild(ul);
+  } else {
+    banner.appendChild(el('div', { style: 'margin-top:6px;color:#7adfa3' }, '✅ Tout ce qui disparaissait est coché. Bonne route.'));
+  }
+  root.appendChild(banner);
+}
+
+// ============================================================
+// ANTI-SPOILER TOGGLE
+// ============================================================
+function applySpoilerMode() {
+  document.body.classList.toggle('spoilers-on', !!state.spoilersOk);
+  const cb = document.getElementById('spoilerToggle');
+  if (cb) cb.checked = !!state.spoilersOk;
+}
+
+function spoilerSpan(text) {
+  const s = el('span', { class: 'spoiler-blur' }, text);
+  s.title = "Click to reveal";
+  s.addEventListener('click', () => s.classList.toggle('revealed'));
+  return s;
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const id = t.dataset.tab;
+      state.currentTab = id;
+      saveState();
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+      document.querySelectorAll('.section').forEach(x => x.classList.toggle('active', x.id === 'section-' + id));
+      // Phase wrap visible seulement pour la checklist
+      document.getElementById('phaseWrap').style.display = (id === 'checklist') ? '' : 'none';
+      document.getElementById('cutoffBanner').style.display = (id === 'checklist') ? '' : 'none';
+      // Lazy render des onglets non-checklist
+      renderTabContent(id);
+    });
+  });
+  // Restore selected tab
+  const tabBtn = document.querySelector(`.tab[data-tab="${state.currentTab}"]`);
+  if (tabBtn) tabBtn.click();
+}
+
+function renderTabContent(id) {
+  if (id === 'checklist')  renderChecklist();
+  if (id === 'affection')  renderAffection();
+  if (id === 'arms')       renderArms();
+  if (id === 'cuisine')    renderCuisine();
+  if (id === 'reference')  renderReference();
+  if (id === 'settings')   renderSettings();
+}
+
+// ============================================================
+// AFFECTION TRACKER
+// ============================================================
+function renderAffection() {
+  const root = document.getElementById('section-affection');
+  root.innerHTML = '';
+
+  // Mécaniques
+  const mech = el('div', { class: 'card' });
+  mech.appendChild(el('h2', {}, "Mécanique d'affection"));
+  AFFECTION_MECHANICS.forEach(m => mech.appendChild(el('div', { class: 'note', style: 'margin:4px 0' }, '• ' + m)));
+  root.appendChild(mech);
+
+  // Compteurs
+  const grid = el('div', { class: 'affection-grid' });
+  AFFECTION_CHARS.forEach(c => {
+    const score = state.affection[c.id] || 0;
+    const cell = el('div', { class: 'affection-cell' });
+    cell.appendChild(el('div', { class: 'name' }, c.name));
+    const scoreEl = el('div', { class: 'score' }, String(score));
+    cell.appendChild(scoreEl);
+    cell.appendChild(el('div', { class: 'pref' }, c.pref));
+    const ctrls = el('div', { class: 'ctrls' });
+    const dec = el('button', {}, '−10');
+    const dec1 = el('button', {}, '−1');
+    const inc1 = el('button', {}, '+1');
+    const inc = el('button', {}, '+10');
+    [
+      [dec, -10], [dec1, -1], [inc1, 1], [inc, 10]
+    ].forEach(([btn, delta]) => {
+      btn.addEventListener('click', () => {
+        state.affection[c.id] = (state.affection[c.id] || 0) + delta;
+        saveState();
+        renderAffection();
+      });
+      ctrls.appendChild(btn);
+    });
+    cell.appendChild(ctrls);
+    grid.appendChild(cell);
+  });
+  const cardCounts = el('div', { class: 'card' });
+  cardCounts.appendChild(el('h2', {}, 'Compteurs'));
+  cardCounts.appendChild(grid);
+  root.appendChild(cardCounts);
+
+  // Classement live
+  const sorted = AFFECTION_CHARS.slice().sort((a, b) => (state.affection[b.id] || 0) - (state.affection[a.id] || 0));
+  const cardRank = el('div', { class: 'card' });
+  cardRank.appendChild(el('h2', {}, 'Classement live'));
+  const ol = el('ol', { class: 'ranking' });
+  sorted.forEach((c, i) => {
+    const score = state.affection[c.id] || 0;
+    const li = el('li', {}, `${c.name} — ${score}`);
+    if (i === 0 && score > 0) li.appendChild(el('span', { class: 'tag yellow', style: 'margin-left:6px' }, '★ Soulmate actuel'));
+    ol.appendChild(li);
+  });
+  cardRank.appendChild(ol);
+
+  // Flag Kratos
+  const kratosScore = state.affection.kratos || 0;
+  const flag = el('div', {
+    class: 'kratos-flag ' + (kratosScore >= KRATOS_THRESHOLD ? 'ok' : 'no')
+  }, kratosScore >= KRATOS_THRESHOLD
+       ? `✅ Kratos rejoignable (score ${kratosScore} ≥ ${KRATOS_THRESHOLD})`
+       : `❌ Kratos pas (encore) rejoignable (score ${kratosScore} / ${KRATOS_THRESHOLD})`);
+  cardRank.appendChild(flag);
+  cardRank.appendChild(el('div', { class: 'note', style: 'margin-top:6px' },
+    "Seuil arbitraire — le guide ne donne pas de chiffre exact. Ajuste KRATOS_THRESHOLD dans le code si besoin."
+  ));
+  root.appendChild(cardRank);
+
+  // Spoiler Kratos vs Zelos
+  const cardLore = el('div', { class: 'card' });
+  cardLore.appendChild(el('h2', {}, 'Choix Kratos / Zelos'));
+  const blurbWrap = el('div', {});
+  if (KRATOS_ZELOS_LORE.spoiler && !state.spoilersOk) {
+    blurbWrap.appendChild(el('div', { class: 'note' }, "Section masquée — active \"Spoil OK\" en haut pour révéler."));
+    blurbWrap.appendChild(el('div', { class: 'spoiler-blur', style: 'margin-top:6px' }, KRATOS_ZELOS_LORE.blurb));
+  } else {
+    blurbWrap.appendChild(el('div', {}, KRATOS_ZELOS_LORE.blurb));
+    const ul = el('ul');
+    KRATOS_ZELOS_LORE.lore.forEach(l => ul.appendChild(el('li', {}, l)));
+    blurbWrap.appendChild(ul);
+  }
+  cardLore.appendChild(blurbWrap);
+  root.appendChild(cardLore);
+}
+
+// ============================================================
+// DEVIL'S ARMS TRACKER
+// ============================================================
+function renderArms() {
+  const root = document.getElementById('section-arms');
+  root.innerHTML = '';
+
+  const intro = el('div', { class: 'card' });
+  intro.appendChild(el('h2', {}, "Devil's Arms — sidequest des armes ultimes"));
+  intro.appendChild(el('div', {}, "9 armes maudites, une par perso. Stats négatives à la base, mais après avoir battu Abyssion, +1 ATK par ennemi tué avec l'arme. Potentiellement les meilleures armes du jeu."));
+  intro.appendChild(el('h3', {}, 'Déclencheur'));
+  const trigger = el('ol');
+  trigger.appendChild(el('li', {}, "Casser le Bacura dans la Toize Valley Mine, puis prendre l'ascenseur en bas et examiner les débris → Evil Eye (Colette)."));
+  trigger.appendChild(el('li', {}, "Aller à Flanoir, parler à Abyssion (à droite de l'auberge) → reçoit Nebilim (Lloyd) + Nebilim's Key pour ouvrir les coffres noirs."));
+  intro.appendChild(trigger);
+  intro.appendChild(el('h3', {}, 'Boss final'));
+  const bossLine = el('div', {});
+  if (!state.spoilersOk) {
+    bossLine.appendChild(document.createTextNode("Boss final de la sidequest : "));
+    bossLine.appendChild(el('span', { class: 'spoiler-blur' }, "Abyssion au Temple de l'Ombre, dernier étage (sceau de Shadow). 120 000 HP."));
+    bossLine.appendChild(document.createTextNode(" Préparer les Life Bottles."));
+  } else {
+    bossLine.textContent = "Abyssion au Temple de l'Ombre, dernier étage (sceau de Shadow). 120 000 HP. Préparer les Life Bottles.";
+  }
+  intro.appendChild(bossLine);
+  root.appendChild(intro);
+
+  // Cards
+  const card = el('div', { class: 'card' });
+  card.appendChild(el('h2', {}, `Les 9 armes (${DEVIL_ARMS.filter(a => state.arms[a.id]?.found).length} / 9)`));
+  DEVIL_ARMS.forEach(a => {
+    const data = state.arms[a.id] || { found: false, kills: 0 };
+    const ac = el('div', { class: 'arm-card' + (data.found ? ' found' : '') });
+    const head = el('div', { class: 'head' });
+    const left = el('div', {});
+    left.appendChild(el('div', { class: 'arm-name' }, `${a.name} — ${a.weapon}`));
+    left.appendChild(el('div', { class: 'arm-owner' }, 'Pour : ' + a.owner));
+    head.appendChild(left);
+    const foundLbl = el('label', { style: 'display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-dim)' });
+    const foundCb = el('input', { type: 'checkbox' });
+    foundCb.checked = !!data.found;
+    foundCb.addEventListener('change', () => {
+      state.arms[a.id] = state.arms[a.id] || { found: false, kills: 0 };
+      state.arms[a.id].found = foundCb.checked;
+      saveState();
+      renderArms();
+    });
+    foundLbl.appendChild(foundCb);
+    foundLbl.appendChild(document.createTextNode('Trouvée'));
+    head.appendChild(foundLbl);
+    ac.appendChild(head);
+    ac.appendChild(el('div', { class: 'loc' }, '📍 ' + a.location));
+    if (a.notes) ac.appendChild(el('div', { class: 'loc', style: 'opacity:0.7' }, a.notes));
+    const kr = el('div', { class: 'kills-row' });
+    kr.appendChild(el('span', { style: 'font-size:11px;color:var(--text-dim)' }, 'Kills :'));
+    const kInput = el('input', { type: 'number', min: '0', value: String(data.kills || 0) });
+    kInput.addEventListener('change', () => {
+      state.arms[a.id] = state.arms[a.id] || { found: false, kills: 0 };
+      state.arms[a.id].kills = Math.max(0, parseInt(kInput.value, 10) || 0);
+      saveState();
+    });
+    kr.appendChild(kInput);
+    kr.appendChild(el('span', { style: 'font-size:11px;color:var(--text-dim)' }, '= +' + (data.kills || 0) + ' ATK'));
+    ac.appendChild(kr);
+    card.appendChild(ac);
+  });
+  root.appendChild(card);
+}
+
+// ============================================================
+// CUISINE QUICK REFERENCE
+// ============================================================
+function renderCuisine() {
+  const root = document.getElementById('section-cuisine');
+  root.innerHTML = '';
+
+  const card = el('div', { class: 'card' });
+  card.appendChild(el('h2', {}, 'Préférences cuisine — quick ref'));
+  card.appendChild(el('div', { class: 'note' }, 'Cuisine post-combat : ±1 affection par plat, selon ingrédients.'));
+
+  const table = el('table', { class: 'cuisine-table' });
+  const thead = el('thead');
+  thead.appendChild(el('tr', {},
+    el('th', {}, 'Perso'),
+    el('th', {}, 'Aime'),
+    el('th', {}, 'Déteste')
+  ));
+  table.appendChild(thead);
+  const tbody = el('tbody');
+  CUISINE_PREFS.forEach(p => {
+    tbody.appendChild(el('tr', {},
+      el('td', {}, p.char),
+      el('td', { class: 'likes' }, p.likes),
+      el('td', { class: 'dislikes' }, p.dislikes)
+    ));
+  });
+  table.appendChild(tbody);
+  card.appendChild(table);
+  root.appendChild(card);
+
+  // Skits
+  const cardSkits = el('div', { class: 'card' });
+  cardSkits.appendChild(el('h2', {}, 'Skits — bulles d\'oreille'));
+  cardSkits.appendChild(el('div', {}, '+60 points en moyenne, +120 pour Presea, +180 pour Regal.'));
+  root.appendChild(cardSkits);
+}
+
+// ============================================================
+// RÉFÉRENCE — EX Skills, Grade Shop, ordre des sceaux, sources
+// ============================================================
+function renderReference() {
+  const root = document.getElementById('section-reference');
+  root.innerHTML = '';
+
+  // EX Skills
+  const exCard = el('div', { class: 'card' });
+  exCard.appendChild(el('h2', {}, 'EX Skills & EX Gems'));
+  EX_SKILLS_NOTES.forEach(n => exCard.appendChild(el('div', { class: 'note', style: 'margin:4px 0' }, '• ' + n)));
+  exCard.appendChild(el('h3', {}, 'Recommandations première run'));
+  const exTable = el('table', { class: 'cuisine-table' });
+  exTable.appendChild(el('thead', {}, el('tr', {}, el('th', {}, 'Perso'), el('th', {}, 'Reco'), el('th', {}, 'Note'))));
+  const exTbody = el('tbody');
+  EX_SKILLS_RECO.forEach(r => {
+    exTbody.appendChild(el('tr', {},
+      el('td', {}, r.char),
+      el('td', { class: 'likes' }, r.reco),
+      el('td', {}, r.note)
+    ));
+  });
+  exTable.appendChild(exTbody);
+  exCard.appendChild(exTable);
+  root.appendChild(exCard);
+
+  // Grade Shop
+  const gsCard = el('div', { class: 'card' });
+  gsCard.appendChild(el('h2', {}, 'Grade Shop — NG+'));
+  gsCard.appendChild(el('div', { class: 'note' }, "À la fin du jeu, ton grade accumulé te permet d'acheter des bonus pour le NG+. Le jeu se complète à 100% en ~4-5 runs."));
+  const gsTable = el('table', { class: 'cuisine-table' });
+  gsTable.appendChild(el('thead', {}, el('tr', {}, el('th', {}, 'Option'), el('th', {}, 'Coût'), el('th', {}, 'Reco 1ère run'))));
+  const gsTbody = el('tbody');
+  GRADE_SHOP.forEach(g => {
+    gsTbody.appendChild(el('tr', {},
+      el('td', {}, g.option),
+      el('td', {}, String(g.cost)),
+      el('td', {}, g.reco)
+    ));
+  });
+  gsTable.appendChild(gsTbody);
+  gsCard.appendChild(gsTable);
+  root.appendChild(gsCard);
+
+  // Tip turbo
+  const tipCard = el('div', { class: 'card' });
+  tipCard.appendChild(el('h2', {}, 'Tip turbo controller'));
+  tipCard.appendChild(el('div', {}, "À Niflheim, trouver un étage où les ennemis respawnent, mettre Lloyd sur le spawn, scotcher la touche A avec un controller turbo → grade infini sans rien faire."));
+  root.appendChild(tipCard);
+
+  // Ordre des sceaux
+  const orderCard = el('div', { class: 'card' });
+  orderCard.appendChild(el('h2', {}, 'Ordre chronologique des sceaux'));
+  const ol = el('ol');
+  STORY_ORDER.forEach(s => {
+    const li = el('li', {}, s.label);
+    if (s.boss) {
+      li.appendChild(document.createTextNode(' — boss : '));
+      const bossText = s.boss;
+      if (s.spoilerBoss && !state.spoilersOk) {
+        li.appendChild(el('span', { class: 'spoiler-blur' }, bossText));
+      } else {
+        li.appendChild(document.createTextNode(bossText));
+      }
+    }
+    ol.appendChild(li);
+  });
+  orderCard.appendChild(ol);
+  root.appendChild(orderCard);
+
+  // Sources
+  const srcCard = el('div', { class: 'card' });
+  srcCard.appendChild(el('h2', {}, 'Sources'));
+  const ulS = el('ul');
+  SOURCES.forEach(s => ulS.appendChild(el('li', {}, s)));
+  srcCard.appendChild(ulS);
+  srcCard.appendChild(el('div', { class: 'note', style: 'margin-top:8px' },
+    "Limites : certaines positions Wonder Chef \"Regal-only\" et certaines positions de Memory Gems sont à confirmer en jeu. Re-vérifier sur Aselia Wiki en priorité."
+  ));
+  root.appendChild(srcCard);
+}
+
+// ============================================================
+// SETTINGS — export/import/reset
+// ============================================================
+function renderSettings() {
+  const root = document.getElementById('section-settings');
+  root.innerHTML = '';
+
+  const card = el('div', { class: 'card' });
+  card.appendChild(el('h2', {}, 'Réglages'));
+
+  // Spoiler toggle (en plus du toggle du header)
+  const spoilerRow = el('div', { class: 'settings-row' });
+  spoilerRow.appendChild(el('div', {},
+    el('div', {}, "Mode anti-spoiler"),
+    el('div', { class: 'note' }, "Si décoché : noms de boss late-game et lore Kratos/Zelos sont floutés.")
+  ));
+  const sBtn = el('button', { class: 'btn ' + (state.spoilersOk ? 'primary' : '') }, state.spoilersOk ? "Spoil OK : ON" : "Spoil OK : OFF");
+  sBtn.addEventListener('click', () => {
+    state.spoilersOk = !state.spoilersOk;
+    saveState();
+    applySpoilerMode();
+    renderSettings();
+    // Re-render des onglets qui contiennent du spoiler
+    if (state.currentTab === 'affection') renderAffection();
+    if (state.currentTab === 'arms')      renderArms();
+    if (state.currentTab === 'reference') renderReference();
+  });
+  spoilerRow.appendChild(sBtn);
+  card.appendChild(spoilerRow);
+
+  // Export JSON
+  const exportRow = el('div', { class: 'settings-row' });
+  exportRow.appendChild(el('div', {},
+    el('div', {}, "Exporter la progression (JSON)"),
+    el('div', { class: 'note' }, "Sauvegarde tout : checklist, affection, Devil's Arms, settings.")
+  ));
+  const exportBtn = el('button', { class: 'btn primary' }, '⬇ Export');
+  exportBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = el('a', { href: url, download: `tos-tracker-${new Date().toISOString().slice(0,10)}.json` });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  exportRow.appendChild(exportBtn);
+  card.appendChild(exportRow);
+
+  // Import JSON
+  const importRow = el('div', { class: 'settings-row' });
+  importRow.appendChild(el('div', {},
+    el('div', {}, "Importer une progression (JSON)"),
+    el('div', { class: 'note' }, "Remplace l'état actuel — fais un export avant si besoin.")
+  ));
+  const importInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
+  importInput.addEventListener('change', () => {
+    const file = importInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        state = Object.assign(defaultState(), parsed, {
+          affection: Object.assign(defaultState().affection, parsed.affection || {}),
+          arms:      Object.assign(defaultState().arms,      parsed.arms      || {}),
+          checked:   Object.assign({},                       parsed.checked   || {}),
+        });
+        saveState();
+        renderAll();
+        alert("Import OK ✅");
+      } catch (e) {
+        alert("Import KO : " + e.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+  const importBtn = el('button', { class: 'btn' }, '⬆ Import');
+  importBtn.addEventListener('click', () => importInput.click());
+  importRow.appendChild(importInput);
+  importRow.appendChild(importBtn);
+  card.appendChild(importRow);
+
+  root.appendChild(card);
+
+  // Reset (planqué : double clic + confirm)
+  const cardReset = el('div', { class: 'card' });
+  cardReset.appendChild(el('h2', {}, 'Zone dangereuse'));
+  cardReset.appendChild(el('div', { class: 'note' }, "Reset complet du tracker. Double-clic puis confirmation."));
+  let armed = false;
+  const resetBtn = el('button', { class: 'btn' }, "Reset (double-cliquer)");
+  resetBtn.addEventListener('click', () => {
+    if (!armed) {
+      armed = true;
+      resetBtn.classList.add('danger');
+      resetBtn.textContent = "Confirmer le reset ? (cliquer encore)";
+      setTimeout(() => {
+        armed = false;
+        resetBtn.classList.remove('danger');
+        resetBtn.textContent = "Reset (double-cliquer)";
+      }, 4000);
+      return;
+    }
+    if (!confirm("Reset complet : checklist, affection, Devil's Arms, phase. Sûr ?")) return;
+    state = defaultState();
+    saveState();
+    applySpoilerMode();
+    renderAll();
+    alert("Reset effectué.");
+  });
+  cardReset.appendChild(resetBtn);
+  root.appendChild(cardReset);
+
+  // Stats
+  const cardStats = el('div', { class: 'card' });
+  cardStats.appendChild(el('h2', {}, 'Stats'));
+  const total = ITEMS.length;
+  const done  = ITEMS.filter(i => state.checked[i.id]).length;
+  cardStats.appendChild(el('div', {}, `Items totaux dans le tracker : ${total}`));
+  cardStats.appendChild(el('div', {}, `Cochés : ${done} (${total ? Math.round(done/total*100) : 0}%)`));
+  cardStats.appendChild(el('div', {}, `Wonder Chefs trouvés : ${WONDER_CHEFS.filter(wc => state.checked[wc.id]).length} / ${WONDER_CHEFS.length}`));
+  cardStats.appendChild(el('div', {}, `Devil's Arms trouvés : ${DEVIL_ARMS.filter(a => state.arms[a.id]?.found).length} / ${DEVIL_ARMS.length}`));
+  root.appendChild(cardStats);
+}
+
+// ============================================================
+// SEARCH (Cmd+K)
+// ============================================================
+const SEARCH_INDEX = (() => {
+  // Combine tous les items + WC + DA + recettes Wonder Chef + sources cuisine
+  const idx = [];
+  ITEMS.forEach(i => {
+    idx.push({
+      label: i.name,
+      sub: `${typeLabel(i.type)} · ${i.location || ''}`,
+      type: i.type,
+      action: () => focusItem(i)
+    });
+  });
+  WONDER_CHEFS.forEach(wc => {
+    idx.push({
+      label: `Recette : ${wc.recipe} (${wc.city})`,
+      sub: `Wonder Chef · ${wc.location}`,
+      type: 'recipe',
+      action: () => focusItem({ id: wc.id })
+    });
+  });
+  DEVIL_ARMS.forEach(da => {
+    idx.push({
+      label: `${da.name} (${da.weapon}) — ${da.owner}`,
+      sub: `Devil's Arm · ${da.location}`,
+      type: 'devilarm',
+      action: () => { setTab('arms'); }
+    });
+  });
+  CUISINE_PREFS.forEach(p => {
+    idx.push({
+      label: `Cuisine : ${p.char}`,
+      sub: `Aime ${p.likes} · déteste ${p.dislikes}`,
+      type: 'cuisine',
+      action: () => { setTab('cuisine'); }
+    });
+  });
+  return idx;
+})();
+
+function setTab(id) {
+  const t = document.querySelector(`.tab[data-tab="${id}"]`);
+  if (t) t.click();
+}
+
+function focusItem(item) {
+  setTab('checklist');
+  state.showAll = true;
+  saveState();
+  renderChecklist();
+  // scroll & highlight
+  setTimeout(() => {
+    const rows = document.querySelectorAll('#section-checklist .item');
+    rows.forEach(r => {
+      if (r.querySelector('.name') && r.querySelector('.name').textContent === item.name) {
+        r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        r.style.outline = '2px solid var(--accent)';
+        setTimeout(() => { r.style.outline = ''; }, 1800);
+      }
+    });
+  }, 50);
+}
+
+function setupSearch() {
+  const modal = document.getElementById('searchModal');
+  const input = document.getElementById('searchInput');
+  const results = document.getElementById('searchResults');
+  const btn = document.getElementById('searchBtn');
+
+  let activeIdx = 0;
+
+  function open() {
+    modal.classList.add('open');
+    input.value = '';
+    activeIdx = 0;
+    runSearch('');
+    setTimeout(() => input.focus(), 30);
+  }
+  function close() { modal.classList.remove('open'); }
+
+  function runSearch(q) {
+    q = q.trim().toLowerCase();
+    const filtered = !q
+      ? SEARCH_INDEX.slice(0, 30)
+      : SEARCH_INDEX.filter(r => r.label.toLowerCase().includes(q) || (r.sub || '').toLowerCase().includes(q)).slice(0, 50);
+    results.innerHTML = '';
+    filtered.forEach((r, i) => {
+      const node = el('div', { class: 'search-result' + (i === activeIdx ? ' active' : '') },
+        el('div', { class: 'r-name' }, r.label),
+        el('div', { class: 'r-meta' }, r.sub || '')
+      );
+      node.addEventListener('click', () => { r.action(); close(); });
+      results.appendChild(node);
+    });
+    if (filtered.length === 0) {
+      results.appendChild(el('div', { class: 'search-result' }, el('div', { class: 'r-meta' }, 'Aucun résultat.')));
+    }
+    return filtered;
+  }
+
+  input.addEventListener('input', () => { activeIdx = 0; runSearch(input.value); });
+  input.addEventListener('keydown', (e) => {
+    const items = results.querySelectorAll('.search-result');
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(items.length - 1, activeIdx + 1); refreshActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(0, activeIdx - 1); refreshActive(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      const r = runSearch(input.value);
+      if (r[activeIdx]) { r[activeIdx].action(); close(); }
+    } else if (e.key === 'Escape') { close(); }
+  });
+  function refreshActive() {
+    results.querySelectorAll('.search-result').forEach((n, i) => n.classList.toggle('active', i === activeIdx));
+    const a = results.querySelector('.search-result.active');
+    if (a) a.scrollIntoView({ block: 'nearest' });
+  }
+
+  btn.addEventListener('click', open);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      modal.classList.contains('open') ? close() : open();
+    } else if (e.key === '/' && !modal.classList.contains('open') && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      open();
+    }
+  });
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+function renderAll() {
+  applySpoilerMode();
+  renderPhaseSelector();
+  renderCutoffBanner();
+  renderTabContent(state.currentTab || 'checklist');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Spoiler toggle dans le header
+  const cb = document.getElementById('spoilerToggle');
+  cb.checked = !!state.spoilersOk;
+  cb.addEventListener('change', () => {
+    state.spoilersOk = cb.checked;
+    saveState();
+    applySpoilerMode();
+    if (state.currentTab === 'affection') renderAffection();
+    if (state.currentTab === 'arms')      renderArms();
+    if (state.currentTab === 'reference') renderReference();
+    if (state.currentTab === 'settings')  renderSettings();
+  });
+
+  setupTabs();
+  setupSearch();
+  renderAll();
+});
+
+</script>
+</body>
+</html>
