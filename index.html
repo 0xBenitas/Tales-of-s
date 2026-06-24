@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Tales of Symphonia — Run Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0d0f17;
@@ -25,10 +28,10 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.45; }
 body { padding-bottom: 80px; }
-h1, h2, h3 { font-family: "Press Start 2P", "VT323", "Courier New", monospace; letter-spacing: 0.5px; }
-h1 { font-size: 16px; margin: 0; }
-h2 { font-size: 14px; color: var(--accent); margin: 22px 0 10px; text-transform: uppercase; }
-h3 { font-size: 12px; color: var(--text-dim); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+h1 { font-family: "Press Start 2P", "Courier New", monospace; font-size: 13px; margin: 0; letter-spacing: 0.5px; line-height: 1.5; color: var(--accent); text-shadow: 0 1px 0 #000, 0 0 12px rgba(201,161,74,.25); }
+h2, h3 { font-family: "Cinzel", Georgia, serif; letter-spacing: 0.5px; }
+h2 { font-size: 17px; color: var(--accent); margin: 4px 0 12px; padding-left: 10px; border-left: 3px solid var(--accent); }
+h3 { font-size: 13px; color: var(--text-dim); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 1.5px; }
 a { color: var(--accent-2); text-decoration: none; }
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; color: var(--text); background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
@@ -86,10 +89,22 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent);
 main { padding: 14px; max-width: 900px; margin: 0 auto; }
 
 .card {
-  background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
-  padding: 12px; margin-bottom: 10px;
+  background: linear-gradient(180deg, var(--bg-2) 0%, #12152099 100%);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
 }
 .card.tight { padding: 8px 10px; }
+
+/* Overview de complétion globale */
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.ov-cell {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; text-align: center;
+}
+.ov-cell .ov-num { font-family: "Cinzel", serif; font-size: 18px; color: var(--accent); font-weight: 700; }
+.ov-cell .ov-lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.ov-cell.done .ov-num { color: var(--green); }
 
 .item {
   display: flex; gap: 10px; align-items: flex-start; padding: 8px 0;
@@ -224,7 +239,10 @@ main { padding: 14px; max-width: 900px; margin: 0 auto; }
   <button class="tab" data-tab="affection">Affection</button>
   <button class="tab" data-tab="arms">Devil's Arms</button>
   <button class="tab" data-tab="cuisine">Cuisine</button>
-  <button class="tab" data-tab="reference">Référence</button>
+  <button class="tab" data-tab="titres">Titres</button>
+  <button class="tab" data-tab="combat">Combat</button>
+  <button class="tab" data-tab="summons">Summons</button>
+  <button class="tab" data-tab="codex">Codex</button>
   <button class="tab" data-tab="settings">Réglages</button>
 </nav>
 
@@ -241,7 +259,10 @@ main { padding: 14px; max-width: 900px; margin: 0 auto; }
   <section class="section" id="section-affection"></section>
   <section class="section" id="section-arms"></section>
   <section class="section" id="section-cuisine"></section>
-  <section class="section" id="section-reference"></section>
+  <section class="section" id="section-titres"></section>
+  <section class="section" id="section-combat"></section>
+  <section class="section" id="section-summons"></section>
+  <section class="section" id="section-codex"></section>
   <section class="section" id="section-settings"></section>
 </main>
 
@@ -462,86 +483,81 @@ ITEMS.push(
 );
 
 // ============================================================
-// WONDER CHEFS (24 recettes — section 4 du guide)
-// Le doc cite explicitement 18 emplacements + 6 secondaires implicites
-// (les positions exactes des slots restants varient selon les sources, je
-// liste tout ce qui est dans le .md + slots génériques pour atteindre 24).
+// WONDER CHEFS — 23 emplacements (data vérifiée Aselia/TheGamer/Steam/kaoticsilence)
+// Les 24 recettes du jeu = 23 Wonder Chef + Sandwich (recette de départ).
+// 18 chefs déguisés + Tabatha (story) + 5 recettes "Regal-only" (Regal à l'écran).
 // ============================================================
 const WONDER_CHEFS = [
-  { id: 'wc_triet',       city: "Triet",     missable: 'green',  cutoff: null, phase: 'triet',
-    disguise: "Lampe-tortue", recipe: "Cabbage Rolls",
-    location: "Auberge, 2e étage, fond du couloir" },
-  { id: 'wc_izoold',      city: "Izoold",    missable: 'green',  cutoff: null, phase: 'palmacosta',
-    disguise: "Pélican en bois", recipe: "Rice Ball",
-    location: "Maison à côté du Katz Expedition, coin droit" },
-  { id: 'wc_palmacosta',  city: "Palmacosta", missable: 'red',    cutoff: 'd1', phase: 'palmacosta',
-    disguise: "Panier de balles", recipe: "Omelet",
-    location: "École, sous l'escalier — DÉTRUIT avec la ville" },
-  { id: 'wc_asgard',      city: "Asgard",    missable: 'green',  cutoff: null, phase: 'asgard',
-    disguise: "Phonographe", recipe: "Meat Stew",
-    location: "Maison d'Aisha, 2e étage à côté du lit" },
-  { id: 'wc_hima',        city: "Hima",      missable: 'green',  cutoff: null, phase: 'hima',
-    disguise: "Marmite fumante", recipe: "Risotto",
-    location: "Auberge, à gauche de la cheminée" },
-  { id: 'wc_luin',        city: "Luin",      missable: 'red',    cutoff: 'd2', phase: 'luin',
+  { id: 'wc_triet', city: "Triet", missable: 'green', cutoff: null, phase: 'triet',
+    disguise: "Lampe coquille de tortue (petite lampe verte)", recipe: "Cabbage Rolls",
+    location: "Auberge, 2e étage, tout au fond du couloir" },
+  { id: 'wc_izoold', city: "Izoold", missable: 'green', cutoff: null, phase: 'palmacosta',
+    disguise: "Pélican en bois sculpté", recipe: "Rice Ball",
+    location: "Maison à côté du Katz Expedition, coin arrière-droit près de la fenêtre" },
+  { id: 'wc_palmacosta', city: "Palmacosta", missable: 'red', cutoff: 'd1', phase: 'palmacosta',
+    disguise: "Brasero / panier (selon source)", recipe: "Omelet",
+    location: "Académie de Palmacosta (école), sous/à droite de l'escalier d'entrée — DÉTRUIT avec la ville" },
+  { id: 'wc_asgard', city: "Asgard", missable: 'green', cutoff: null, phase: 'asgard',
+    disguise: "Gramophone / phonographe", recipe: "Meat Stew",
+    location: "Maison d'Aisha, 2e étage, à côté du lit" },
+  { id: 'wc_hima', city: "Hima", missable: 'green', cutoff: null, phase: 'hima',
+    disguise: "Chaudron / marmite fumante", recipe: "Risotto",
+    location: "Auberge, arrière-salle du rez-de-chaussée, à gauche de la cheminée" },
+  { id: 'wc_luin', city: "Luin", missable: 'yellow', cutoff: null, phase: 'luin',
     disguise: "Cochon-vapeur rose", recipe: "Seafood Stew",
-    location: "Magasin d'objets, à gauche du comptoir — Luin est détruit avant Welgaia" },
+    location: "Magasin d'objets, derrière le comptoir (à gauche), dans le coin au sol. Luin est détruite puis reconstructible (dons) — récupère quand la ville est accessible." },
   { id: 'wc_meltokio_armor', city: "Meltokio", missable: 'green', cutoff: null, phase: 'tethealla_early',
-    disguise: "Maneki-neko", recipe: "Steak",
-    location: "Armurerie, vitrine fond gauche" },
+    disguise: "Maneki-neko (chat porte-bonheur)", recipe: "Steak",
+    location: "Armurerie, vitrine dans le coin arrière-gauche" },
   { id: 'wc_meltokio_zelos', city: "Meltokio", missable: 'green', cutoff: null, phase: 'tethealla_early',
-    disguise: "Cadeau avec chapeau de chef", recipe: "Fruit Cocktail",
-    location: "Maison de Zelos, 2e étage" },
-  { id: 'wc_sybak',       city: "Sybak",     missable: 'green',  cutoff: null, phase: 'tethealla_early',
-    disguise: "Magazine", recipe: "(recette Sybak)",
-    location: "Bibliothèque, entre deux étagères" },
-  { id: 'wc_mizuho',      city: "Mizuho",    missable: 'green',  cutoff: null, phase: 'tethealla_early',
-    disguise: "Piège à animaux", recipe: "(recette Mizuho)",
-    location: "Hutte du chef" },
-  { id: 'wc_altamira',    city: "Altamira",  missable: 'green',  cutoff: null, phase: 'tethealla_mid',
-    disguise: "(objet 4e étage hôtel)", recipe: "(recette Altamira)",
-    location: "Hôtel, 4e étage" },
-  { id: 'wc_exire',       city: "Exire",     missable: 'green',  cutoff: null, phase: 'tethealla_mid',
-    disguise: "Maquette de Rheaird", recipe: "(recette Exire)",
-    location: "Maison à 3 étages, étage du milieu" },
-  { id: 'wc_dirk',        city: "Maison de Dirk", missable: 'yellow', cutoff: null, phase: 'tethealla_mid',
-    disguise: "Mangeoire à oiseaux", recipe: "(recette Dirk)",
-    location: "Chambre de Lloyd, après retour en Sylvarant" },
-  { id: 'wc_tabitha',     city: "Chez Altessa (Tabitha)", missable: 'yellow', cutoff: null, phase: 'tethealla_mid',
-    disguise: "—", recipe: "(recette Tabitha)",
-    location: "Story-related, parler à Tabitha au bon moment" },
-  // --- Recettes Regal-only (post-destruction de Heimdall) ---
-  { id: 'wc_regal_asgard', city: "Asgard (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "(Regal-only)", recipe: "(recette Regal Asgard)",
-    location: "Devant le moulin — Regal en perso à l'écran, après destruction de Heimdall" },
+    disguise: "Cadeau emballé avec chapeau de chef", recipe: "Fruit Cocktail",
+    location: "Maison de Zelos (quartier riche, maison jaune), 2e étage, à gauche de la porte" },
+  { id: 'wc_sybak', city: "Sybak", missable: 'green', cutoff: null, phase: 'tethealla_early',
+    disguise: "Présentoir à magazines", recipe: "Fried Rice",
+    location: "Bibliothèque (bâtiment académique), entre les deux étagères près de la fenêtre de droite" },
+  { id: 'wc_mizuho', city: "Mizuho", missable: 'green', cutoff: null, phase: 'tethealla_early',
+    disguise: "Piège à animaux", recipe: "Ramen",
+    location: "Hutte du chef, juste à l'entrée" },
+  { id: 'wc_ozette_inn', city: "Ozette", missable: 'red', cutoff: 'd2', phase: 'tethealla_mid',
+    disguise: "Perruche / perroquet", recipe: "Tenderloin",
+    location: "Auberge — Ozette est brûlée (attaque de Forcystus), récupère avant la destruction" },
+  { id: 'wc_ozette_presea', city: "Ozette (maison de Presea)", missable: 'red', cutoff: 'd2', phase: 'tethealla_mid',
+    disguise: "Ours en bois sculpté", recipe: "Gratin",
+    location: "Maison de Presea, chambre de son père, à côté du lit (après que Presea rejoigne) — perdu avec Ozette" },
+  { id: 'wc_flanoir', city: "Flanoir", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Boîte en bois / coquillage rose", recipe: "Quiche",
+    location: "Église de Martel, tout au fond dans le coin gauche" },
+  { id: 'wc_dirk', city: "Maison de Dirk", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Nichoir / oiseau sculpté", recipe: "Miso Stew",
+    location: "Chambre de Lloyd (étage) — disponible seulement après le retour de Tethe'alla" },
+  { id: 'wc_altamira', city: "Altamira", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Citrouille verte géante", recipe: "Spaghetti",
+    location: "Hôtel Lezareno, 4e étage, sous l'escalier — il faut dormir jusqu'à la nuit pour y accéder" },
+  { id: 'wc_exire', city: "Exire", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Maquette de Rheaird", recipe: "Shortcake",
+    location: "Maison à 3 étages (maison de Katz), étage du milieu" },
+  { id: 'wc_heimdall', city: "Heimdall", missable: 'red', cutoff: 'd2', phase: 'tethealla_mid',
+    disguise: "Tableau / peinture", recipe: "Cream Stew",
+    location: "Maison de l'Ancien, près du lit — Heimdall est brûlée tard dans l'arc Tethe'alla" },
+  { id: 'wc_tabatha', city: "Chez Altessa (Tabatha)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Aucun (PNJ story)", recipe: "Curry",
+    location: "Maison d'Altessa — parler à Tabatha (après les events de la base de Tethe'alla)" },
+  // --- 5 recettes Regal-only (Regal à l'écran, certaines après destruction de Heimdall) ---
+  { id: 'wc_regal_latheon', city: "Latheon Gorge (Regal-only)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
+    disguise: "Sculpture (Regal-only)", recipe: "Pescatore",
+    location: "Maison du conteur, arrière-salle derrière le conteur — Regal à l'écran" },
   { id: 'wc_regal_meltokio', city: "Meltokio (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "(Regal-only)", recipe: "(recette Regal Meltokio)",
-    location: "Devant les portes du château — Regal en perso, après destruction de Heimdall" },
+    disguise: "Le Wonder Chef apparaît directement", recipe: "Beef Stew",
+    location: "Devant le château, à gauche des escaliers menant aux portes — Regal à l'écran" },
   { id: 'wc_regal_hog_sw', city: "House of Guidance SO (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "(Regal-only)", recipe: "(recette Regal HoG SO)",
-    location: "House of Guidance sud-ouest — Regal en perso, après destruction de Heimdall" },
+    disguise: "Le Wonder Chef apparaît directement", recipe: "Pork Cutlets",
+    location: "House of Guidance sud-ouest — Regal à l'écran, après la destruction de Heimdall" },
   { id: 'wc_regal_hog_se', city: "House of Guidance SE (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "(Regal-only)", recipe: "(recette Regal HoG SE)",
-    location: "House of Guidance sud-est — Regal en perso, après destruction de Heimdall" },
-  // --- Slots additionnels pour atteindre les 24 (positions à confirmer en jeu, le .md liste 24 recettes mais détaille moins de slots) ---
-  { id: 'wc_slot_19', city: "Slot 19 (à confirmer)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
-  { id: 'wc_slot_20', city: "Slot 20 (à confirmer)", missable: 'green', cutoff: null, phase: 'tethealla_mid',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
-  { id: 'wc_slot_21', city: "Slot 21 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
-  { id: 'wc_slot_22', city: "Slot 22 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
-  { id: 'wc_slot_23', city: "Slot 23 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
-  { id: 'wc_slot_24', city: "Slot 24 (à confirmer)", missable: 'green', cutoff: null, phase: 'late',
-    disguise: "—", recipe: "(recette additionnelle)",
-    location: "Position à vérifier en jeu (Aselia Wiki)" },
+    disguise: "Le Wonder Chef apparaît directement", recipe: "Potato Salad",
+    location: "House of Guidance sud-est (de l'autre côté des montagnes face à Latheon Gorge) — après destruction de Heimdall" },
+  { id: 'wc_regal_asgard', city: "Asgard (Regal-only)", missable: 'green', cutoff: null, phase: 'late',
+    disguise: "Le Wonder Chef apparaît directement", recipe: "Paella",
+    location: "Devant le moulin (Sylvarant) — Regal à l'écran, late game" },
 ];
 
 // Sidequest Wonder Chef finale
@@ -672,7 +688,7 @@ const EX_SKILLS_NOTES = [
   "Chaque perso a 4 slots d'EX Skills (1 par niveau de gem : Lv1, Lv2, Lv3, Lv4).",
   "Une gem équipée ne peut pas être retirée, seulement DÉTRUITE. Réfléchir avant.",
   "Les EX Skills déterminent quel arbre de Tech tu débloques (Strike vs Technical).",
-  "Combos d'EX Skills = compound EX Skills (ex : Super Blast pour Lloyd qui régen TP en attaquant)."
+  "Combos d'EX Skills = compound EX Skills (ex : Relax = régen TP en restant immobile ; cf. onglet Combat). NB : le « Super Blast régen TP » du guide d'origine est une erreur — Super Blast est exclusif Zelos/Kratos et ne régen pas de TP."
 ];
 
 // ============================================================
@@ -746,12 +762,196 @@ const STORY_ORDER = [
 // ============================================================
 const SOURCES = [
   "GameFAQs Walkthrough (Kratos15354) — référence Chronicles",
-  "Aselia Wiki (Affinity, Devil's Arms, Wonder Chef)",
-  "TheGamer Tales of Symphonia Remastered guides (2023)",
-  "Phaelin's Affection Guide (GameFAQs, vintage mais référence)",
+  "Aselia Wiki / Fandom (Affinity, Devil's Arms, Wonder Chef, Recipes, Titles, Summon Spirits)",
+  "TheGamer — Tales of Symphonia Remastered guides (2023)",
+  "StrategyWiki — Tales of Symphonia/Recipes",
+  "Steam Community — Complete Title List",
+  "kaoticsilence — Shades of Silence walkthroughs",
+  "Phaelin's Affection Guide (GameFAQs)",
   "Ket_Shi's Devil's Arms FAQ (GameFAQs)",
   "BeforeIPlay community wiki"
 ];
+
+// ============================================================
+// RECETTES (24 — data Aselia/TheGamer/StrategyWiki)
+// Sandwich = recette de départ ; les 23 autres viennent du Wonder Chef.
+// ============================================================
+const RECIPES = [
+  { name: "Sandwich",      ingredients: ["Pain","Bœuf","Légumes verts","Citron","Concombre"], effect: "Restaure un peu de HP", source: "Recette de départ" },
+  { name: "Risotto",       ingredients: ["Riz","Fromage","Lait","Oignon","Champignon","Carotte"], effect: "Restaure un peu de HP", source: "Wonder Chef · Hima" },
+  { name: "Ramen",         ingredients: ["Panyon","Satay noir","Algue","Bœuf"], effect: "Restaure modérément les HP", source: "Wonder Chef · Mizuho" },
+  { name: "Spaghetti",     ingredients: ["Nouilles","Oignon","Tomate"], effect: "Restaure beaucoup de HP", source: "Wonder Chef · Altamira" },
+  { name: "Cabbage Rolls", ingredients: ["Chou","Porc","Oignon","Champignon","Fromage"], effect: "Restaure un peu de TP", source: "Wonder Chef · Triet" },
+  { name: "Fruit Cocktail",ingredients: ["Fruit","Fruit"], effect: "Restaure un peu de TP", source: "Wonder Chef · Meltokio (Zelos)" },
+  { name: "Tenderloin",    ingredients: ["Viande","Oignon","Tomate"], effect: "Restaure modérément les TP", source: "Wonder Chef · Ozette" },
+  { name: "Shortcake",     ingredients: ["Fruit","Œuf","Lait"], effect: "Restaure beaucoup de TP", source: "Wonder Chef · Exire" },
+  { name: "Rice Ball",     ingredients: ["Riz","Bœuf","Algue","Satay blanc"], effect: "Restaure un peu de HP et TP", source: "Wonder Chef · Izoold" },
+  { name: "Fried Rice",    ingredients: ["Riz","Œuf","Bœuf","Poivron","Carotte","Satay noir"], effect: "Restaure un peu de HP et TP", source: "Wonder Chef · Sybak" },
+  { name: "Curry",         ingredients: ["Riz","Oignon","Satay rouge","Bœuf","Pomme de terre","Carotte","Champignon"], effect: "Restaure modérément HP et TP", source: "Wonder Chef · Tabatha (Altessa)" },
+  { name: "Miso Stew",     ingredients: ["Miso","Kombu","Œuf","Bœuf","Radis","Konjac"], effect: "Restaure beaucoup de HP et TP", source: "Wonder Chef · Maison de Dirk" },
+  { name: "Omelet",        ingredients: ["Riz","Œuf","Oignon","Bœuf","Citron","Fromage"], effect: "Soigne Poison", source: "Wonder Chef · Palmacosta 🔴" },
+  { name: "Steak",         ingredients: ["Viande","Oignon","Carotte","Fromage","Riz","Satay noir"], effect: "Soigne Paralysie", source: "Wonder Chef · Meltokio (armurerie)" },
+  { name: "Quiche",        ingredients: ["Œuf","Viande","Crevette"], effect: "Soigne Malédiction", source: "Wonder Chef · Flanoir" },
+  { name: "Cream Stew",    ingredients: ["Lait","Oignon","Carotte","Bœuf","Pomme de terre"], effect: "Soigne tous les status", source: "Wonder Chef · Heimdall 🔴" },
+  { name: "Meat Stew",     ingredients: ["Viande","Kombu","Radis","Tofu","Carotte","Nouilles"], effect: "Restaure un peu de HP + ↑ Attaque", source: "Wonder Chef · Asgard" },
+  { name: "Seafood Stew",  ingredients: ["Poisson","Kombu","Radis","Tofu","Carotte"], effect: "Restaure un peu de TP + ↑ Défense", source: "Wonder Chef · Luin" },
+  { name: "Gratin",        ingredients: ["Fromage","Pâtes","Lait","Bœuf","Œuf","Pomme de terre"], effect: "Restaure un peu de HP/TP + ↑ Précision", source: "Wonder Chef · Ozette (Presea) 🔴" },
+  { name: "Pescatore",     ingredients: ["Pâtes","Poisson","Tomate"], effect: "Restaure un peu de HP/TP + ↑ Attaque Magique", source: "Wonder Chef · Latheon (Regal)" },
+  { name: "Pork Cutlets",  ingredients: ["Porc","Pain","Œuf","Légumes verts","Riz","Satay violet"], effect: "Restaure énormément de HP", source: "Wonder Chef · House of Guidance SO (Regal)" },
+  { name: "Potato Salad",  ingredients: ["Pomme de terre","Légume","Satay violet","Oignon","Concombre","Carotte"], effect: "Restaure énormément de TP", source: "Wonder Chef · House of Guidance SE (Regal)" },
+  { name: "Beef Stew",     ingredients: ["Viande","Tomate","Satay violet"], effect: "Soigne tous les status", source: "Wonder Chef · Meltokio château (Regal)" },
+  { name: "Paella",        ingredients: ["Riz","Poisson","Satay violet"], effect: "↑ toutes les stats", source: "Wonder Chef · Asgard (Regal)" },
+];
+
+// ============================================================
+// TITRES NOTABLES / MISSABLES (~48 — data TheGamer/Steam/Aselia)
+// ============================================================
+const TITLES = [
+  { char: "Lloyd", title: "Peeping Tom", howto: "Après l'event docteur de Flanoir, avec Zelos dans la team, choisir « Females » à la scène des sources chaudes", missable: 'red', bonus: "INT +5, EVA +5" },
+  { char: "Lloyd", title: "Eternal Apprentice", howto: "N'utiliser que des épées en bois (ne pas changer l'arme de Lloyd) jusqu'à la rencontre de Kilia", missable: 'red', bonus: "Bonus de croissance" },
+  { char: "Lloyd", title: "Brave Soul", howto: "Battre Yuan (combat optionnel) sans fuir", missable: 'red', bonus: "HP +5, STR +5, DEF +4, EVA +4" },
+  { char: "Lloyd", title: "Gourmet King", howto: "Maîtriser toutes les recettes puis parler au Wonder Chef avec Lloyd à l'écran", missable: 'yellow', bonus: "Bonus cuisine" },
+  { char: "Lloyd", title: "Unrivaled Blade", howto: "Flanoir : choisir Kratos ; Sheena bat Kuchinawa ; finir avec les 8 persos (Kratos recruté)", missable: 'red', bonus: "+0 stats" },
+  { char: "Lloyd", title: "Berserker", howto: "Gagner 256 combats en Hard ou Mania", missable: 'yellow', bonus: "HP +10, STR +10, ACC +6" },
+  { char: "Lloyd", title: "Holy Sword", howto: "Atteindre le niveau 100", missable: 'green', bonus: "DEF +10, EVA +10" },
+  { char: "Colette", title: "Dog Lover", howto: "Parler à TOUS les chiens du jeu avec Colette en perso à l'écran (beaucoup sont missables)", missable: 'red', bonus: "INT +4, EVA +4, ACC +4" },
+  { char: "Colette", title: "Klutz", howto: "Examiner le trou dans le mur de la salle de classe de l'école d'Iselia", missable: 'red', bonus: "HP +1, STR +1, ACC +1" },
+  { char: "Colette", title: "Charismatic Chef", howto: "Maîtriser toutes les recettes avec Colette à l'écran", missable: 'yellow', bonus: "Bonus cuisine" },
+  { char: "Colette", title: "Mermaid", howto: "Event docteur Flanoir + suivre la quête plage (Beach Blanket Blowout)", missable: 'red', bonus: "+0 stats" },
+  { char: "Colette", title: "Little Pickpocket", howto: "Utiliser les EX Skills Item Thief / Item Rover 400 fois", missable: 'yellow', bonus: "↑ HP, STR, DEF" },
+  { char: "Colette", title: "Angelic Maiden", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, DEF +10" },
+  { char: "Genis", title: "I Hate Gels!", howto: "Ne jamais utiliser de gels sur Genis jusqu'à la 1ère rencontre de Pronyma", missable: 'red', bonus: "HP +3, TP +1, STR/DEF/INT/EVA/ACC +3" },
+  { char: "Genis", title: "Honor Roll", howto: "Réussir le mini-jeu de l'Académie de Palmacosta avant que Colette perde sa voix", missable: 'red', bonus: "Bonus de croissance" },
+  { char: "Genis", title: "Mana Master", howto: "Event optionnel ; apprend Meteor Storm en même temps", missable: 'yellow', bonus: "Gros INT/EVA + TP/ACC" },
+  { char: "Genis", title: "Little Chef", howto: "Maîtriser toutes les recettes avec Genis à l'écran", missable: 'yellow', bonus: "DEF +5, INT +4, EVA +5" },
+  { char: "Genis", title: "I'm Not Cold!", howto: "Flanoir : choisir Genis ; ouvrir la porte de Vinheim ; dormir à l'hôtel de Flanoir", missable: 'red', bonus: "+0 stats" },
+  { char: "Raine", title: "Monster Collector", howto: "Compléter la liste des monstres puis parler à Nova à la caravane", missable: 'yellow', bonus: "Gros INT + TP" },
+  { char: "Raine", title: "Sisterly Love", howto: "Retourner à Triet après avoir fini les ruines de Triet", missable: 'red', bonus: "STR +1, ACC +1" },
+  { char: "Raine", title: "Chosen Beauty", howto: "Acheter l'objet « ???? » (150 000 chips au casino)", missable: 'yellow', bonus: "+0 stats" },
+  { char: "Raine", title: "Passable Chef?", howto: "Maîtriser toutes les recettes avec Raine à l'écran", missable: 'yellow', bonus: "DEF +5, INT +4, EVA +5" },
+  { char: "Raine", title: "Wisewoman", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, INT +10" },
+  { char: "Sheena", title: "Treasure Hunter", howto: "Ouvrir tous les coffres de tous les donjons puis parler au Sleeping Katz avec Sheena à l'écran", missable: 'red', bonus: "STR +5, DEF +5, INT +10" },
+  { char: "Sheena", title: "Successor", howto: "Après Flanoir, déclencher l'event du Chef Igaguri (Mizuho)", missable: 'red', bonus: "+0 stats" },
+  { char: "Sheena", title: "Master Cook", howto: "Maîtriser toutes les recettes avec Sheena à l'écran", missable: 'yellow', bonus: "DEF +5, INT +4, EVA +5" },
+  { char: "Sheena", title: "Ultimate Summoner", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, DEF +10" },
+  { char: "Zelos", title: "Princess Guard", howto: "Sauver la princesse des soldats dans la forêt de Gaoracchia", missable: 'red', bonus: "STR +4, DEF +2" },
+  { char: "Zelos", title: "Gigolo", howto: "Équiper l'EX Skill « Personal » et parler à toutes les femmes des 2 mondes", missable: 'red', bonus: "Bonus de croissance" },
+  { char: "Zelos", title: "Gilgamesh", howto: "Finir un combat avec Zelos équipé Excalibur + Golden Armor/Helm + Hyper Gauntlet/Blue Shield + Jet Boots", missable: 'yellow', bonus: "HP +8, TP +1, STR +8, DEF +8" },
+  { char: "Zelos", title: "Gourmet Prince", howto: "Maîtriser toutes les recettes avec Zelos à l'écran", missable: 'yellow', bonus: "TP +5, EVA +4, ACC +5" },
+  { char: "Zelos", title: "Elegant Swordsman", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, DEF +10" },
+  { char: "Zelos", title: "⚠️ Route Kratos = Zelos perdu", howto: "Si Kratos est recruté à Flanoir, Zelos quitte définitivement → tous ses titres deviennent missables sur cette route", missable: 'red', bonus: "(note de route)" },
+  { char: "Presea", title: "Mature Kid", howto: "Visiter la maison de Presea, le magasin d'Ozette et le mémorial d'Altamira", missable: 'red', bonus: "HP +7, TP +2, ACC +3" },
+  { char: "Presea", title: "Paw Mania", howto: "Voir le skit « Poke Poke » avant le Temple de la Foudre", missable: 'red', bonus: "TP +1, INT +5" },
+  { char: "Presea", title: "Gentle Warmth", howto: "Flanoir : choisir Presea", missable: 'red', bonus: "+0 stats" },
+  { char: "Presea", title: "Master Chef", howto: "Maîtriser toutes les recettes avec Presea à l'écran", missable: 'yellow', bonus: "DEF +5, INT +4, EVA +5" },
+  { char: "Presea", title: "Bursting Girl", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, STR +10" },
+  { char: "Regal", title: "Paw Dandy", howto: "Voir le skit « Paw » après le « Poke Poke » de Presea", missable: 'red', bonus: "TP +1, INT +5" },
+  { char: "Regal", title: "The Duke", howto: "Flanoir : choisir Regal, puis parler à George à Altamira", missable: 'red', bonus: "+0 stats" },
+  { char: "Regal", title: "God of the Kitchen", howto: "Maîtriser toutes les recettes / battre le Dark Chef avec Regal à l'écran", missable: 'yellow', bonus: "DEF +5, INT +4, EVA +5" },
+  { char: "Regal", title: "Perfect Battler", howto: "Atteindre le niveau 100", missable: 'green', bonus: "HP +10, STR +10" },
+  { char: "Kratos", title: "Dad", howto: "Voir le skit « Childhood Memories » en arrivant à Flanoir pour le docteur", missable: 'red', bonus: "Bonus de croissance" },
+  { char: "Kratos", title: "Steel Demon", howto: "Haute affection Kratos + le choisir à Flanoir (Zelos part) + Sheena bat Kuchinawa + 8 persos à la fin", missable: 'red', bonus: "+0 stats" },
+  { char: "Kratos", title: "War God", howto: "Niveau 100 (uniquement si Kratos recruté)", missable: 'red', bonus: "HP +10, INT +10, ACC +5/10" },
+  { char: "Kratos", title: "Conqueror", howto: "Finir le Colisée mode Single Avancé avec Kratos (recruté)", missable: 'red', bonus: "Bonus à toutes les stats" },
+];
+
+// ============================================================
+// MYSTIC ARTES (Hi-Ougi) — conditions de déblocage
+// ============================================================
+const MYSTIC_ARTES = [
+  { char: "Lloyd", name: "Falcon's Crest", req: "Titre Eternal Swordsman (auto en story à Derris-Kharlan) + Material Blade équipée. En Over Limit, HP ≤ 16%, presser Attaque + Garde + Tech ensemble." },
+  { char: "Colette", name: "Holy Judgment", req: "Apprendre Holy Song (après le 3e sceau) + Judgment (Tour du Salut), utiliser chacun 50×. Se déclenche aléatoirement en lançant Holy Song/Judgment." },
+  { char: "Genis", name: "Indignation Judgment", req: "Lightning (Lv9, 50×) → Thunder Blade (Lv26 Technical, 50×) → Indignation (Lv60 Technical, 50×). Lancer Indignation pendant l'Over Limit." },
+  { char: "Raine", name: "Sacred Shine", req: "Photon (~Lv16-18, 50×) + Ray/Holy Lance (Lv46, ~50-100×). Lancer Ray/Holy Lance en Over Limit." },
+  { char: "Raine", name: "Fairy Circle", req: "Chaîne soin Technical : First Aid → Nurse → Healing Circle → Revitalize (Lv50), Revitalize 100×. Lancer Revitalize en Over Limit." },
+  { char: "Sheena", name: "Mystic Artes d'invocation (dont Summon: Birth / Maxwell)", req: "Former les pactes, invoquer en Over Limit. Maxwell : post-game (Derris Emblem + 4 persos équipés Garnet/Aquamarine/Opal/Ruby, battre Maxwell à Exire)." },
+  { char: "Zelos", name: "Holy Binds", req: "Chaîne Demon Fang → Light Spear → Demon Spear (100×) + Tour du Salut finie. Demon Spear en Over Limit, HP ≤ 16%." },
+  { char: "Zelos", name: "Divine Judgment", req: "Prérequis Holy Binds remplis, utiliser Holy Binds ≥1× pour apprendre Judgment, puis Judgment 20×. Lancer Judgment en Over Limit." },
+  { char: "Presea", name: "Infernal Ruins", req: "Key Crest (région Meltokio) + Beast 100× + EX-Gem Lv3/max avec Mighty Charge. Beast en Over Limit." },
+  { char: "Presea", name: "Crimson Devastation", req: "Comme Infernal Ruins mais Beast 200×. Pour la déclencher : tous les alliés KO, HP de Presea ≤ 16%, en Over Limit + Mighty Charge, utiliser Beast." },
+  { char: "Regal", name: "Fanged Finality", req: "Identité du président Lezareno révélée + Force (Lv53) utilisée 100×. En Over Limit : Ground Tech → Anti-Air → Air Tech → Force." },
+  { char: "Kratos", name: "Holy Binds", req: "Haute affection + le faire revenir à Flanoir. Lloyd absent/sans Material Blade, équiper Flamberge, Over Limit, HP ≤ 16%, Attaque + Garde + Tech." },
+];
+
+// Compound EX Skills notables (1ère run) — inclut la correction Super Blast
+const COMPOUND_EX = [
+  { name: "Relax", components: "Dodge (Lv2) + Spirit (Lv2/3)", effect: "Rester immobile régénère lentement les TP. ✅ C'est CE skill (pas Super Blast) qui régen les TP.", forChar: "Lloyd, Genis, Raine, Zelos/Kratos, Regal" },
+  { name: "Spirit Thief", components: "Spirit (Lv2/3) + Stat Boost (Lv4)", effect: "Enchaîner des combos régénère les TP.", forChar: "Colette" },
+  { name: "Blood Spirit", components: "Magical (Lv1) + Guard Plus + E. Guard", effect: "Les dégâts subis sont convertis en TP.", forChar: "Genis, Raine, Sheena" },
+  { name: "Super Blast", components: "Super Chain (Lv3) + Eternal (Lv3) + Slasher (Lv3)", effect: "Permet d'enchaîner un Tech après un combo standard complet de 6 coups. ⚠️ Exclusif Zelos/Kratos — NE régen PAS de TP (erreur fréquente).", forChar: "Zelos, Kratos" },
+  { name: "EXP Plus", components: "Taunt (Lv1) + Personal (Lv2) + Eternal (Lv3)", effect: "↑ EXP gagnée (~5%). Recommandé en 1ère run.", forChar: "Quasi tous" },
+  { name: "Over Limit", components: "Personal (Lv2) + Eternal (Lv3)", effect: "Allonge la durée de l'Over Limit (aide à placer les Mystic Artes).", forChar: "Tous" },
+  { name: "Concentrate", components: "Speed Cast / Spell Save / Spell Charge (selon perso)", effect: "Immunité aux interruptions pendant l'incantation (pas de cancel).", forChar: "Genis, Raine, Zelos/Kratos" },
+];
+
+// ============================================================
+// SUMMON SPIRITS (12 — data Aselia/Neoseeker)
+// ============================================================
+const SUMMON_SPIRITS = [
+  { name: "Undine", element: "Eau", location: "Sceau de l'Eau — Water Temple (Thoda Geyser, Sylvarant)", boss: "Undine", optional: false, missable: 'green', notes: "Premier pacte de la story." },
+  { name: "Efreet", element: "Feu", location: "Sceau du Feu — Triet Ruins (Sylvarant)", boss: "Efreet (Ifrit)", optional: false, missable: 'green', notes: "Un des 4 sceaux de Sylvarant." },
+  { name: "Sylph", element: "Vent", location: "Sceau du Vent — Balacruf Mausoleum (Sylvarant)", boss: "Sylph (3 fées : Sephie, Yutis, Fairess)", optional: false, missable: 'green', notes: "Battre les 3 fées." },
+  { name: "Luna", element: "Lumière", location: "Sceau de la Lumière — Tower of Mana (Sylvarant)", boss: "Luna & Aska (ensemble)", optional: false, missable: 'green', notes: "Combat de paire avec Aska." },
+  { name: "Aska", element: "Lumière", location: "Tower of Mana — pacte complété quand Luna & Aska sont invoqués ensemble", boss: "Aska (avec Luna)", optional: false, missable: 'green', notes: "Esprit compagnon de Luna." },
+  { name: "Volt", element: "Foudre", location: "Temple de la Foudre (Tethe'alla, île isolée)", boss: "Volt", optional: false, missable: 'green', notes: "Équiper Sheena en immunité foudre (Card of Lightning, Thunder Cape). Moment-clé : Corrine." },
+  { name: "Gnome", element: "Terre", location: "Temple de la Terre (Tethe'alla)", boss: "Gnome", optional: false, missable: 'green', notes: "Pacte de l'arc Tethe'alla." },
+  { name: "Celsius", element: "Glace", location: "Temple de la Glace (région de Flanoir, Tethe'alla)", boss: "Celsius (+ le loup Fenrir)", optional: false, missable: 'green', notes: "Combat à deux avec Fenrir." },
+  { name: "Shadow", element: "Ténèbres", location: "Temple des Ténèbres (via Mizuho / forêt de Gaoracchia)", boss: "Shadow", optional: false, missable: 'green', notes: "Temple sombre — nécessite l'amélioration lumière du Sorcerer's Ring." },
+  { name: "Origin", element: "Origine (non-élémentaire)", location: "Torent Forest, près de Heimdall (Tethe'alla)", boss: "Origin (précédé du duel Lloyd vs Kratos)", optional: false, missable: 'green', notes: "Requis pour manier l'Eternal Sword. Kratos doit libérer le mana scellant Origin." },
+  { name: "Maxwell", element: "Tous éléments (non-élémentaire)", location: "Monument caché à Exire (Tethe'alla)", boss: "Maxwell", optional: true, missable: 'yellow', notes: "OPTIONNEL. Derris Emblem (Welgaia) + 4 persos équipés Ruby/Aquamarine/Opal/Garnet → examiner le monument d'Exire. À faire avant le point de non-retour final." },
+  { name: "Corrine", element: "(non-élémentaire, allié)", location: "Avec Sheena dès le départ (pas de temple/boss)", optional: true, missable: 'green', notes: "Invocation alliée de Sheena, pas un pacte. Inclus pour complétude." },
+];
+
+// ============================================================
+// FIGURINES / COSTUMES / CHIENS (collectibles)
+// ============================================================
+const FIGURINES = {
+  total: "297 figurines",
+  how: "Dirk fabrique les figurines à partir de « Pellets » (Pellet, Fine, Super, Rare) que tu lui apportes. Résultat aléatoire mais jamais de doublon. Récupère d'abord le Figurine Book auprès de Harley à Asgard (labo dans la montagne, côté est) — dispo après la destruction de l'Asgard Human Ranch.",
+  where: "Fabriquées chez Dirk (près d'Iselia). Suivies/visualisées dans le Figurine Book.",
+  warning: "⚠️ Ne PAS fabriquer (et surtout ne pas gâcher les Rare Pellets) avant la fin du jeu / dernière zone (Vinheim) : le pool complet n'est pas débloqué avant, donc les pellets précoces sont gâchés.",
+};
+const COSTUMES = [
+  { char: "Lloyd", costume: "Beach Boy (maillot)", howto: "Event plage d'Altamira après le docteur de Flanoir (toujours pour Lloyd)", missable: 'yellow' },
+  { char: "Lloyd", costume: "Pirate (Arrgh, Me Hearties)", howto: "Reconstruire Luin, puis (Zelos dans la team) parler au pirate Aifread au ponton", missable: 'yellow' },
+  { char: "Lloyd", costume: "Nobleman (soirée)", howto: "Event soirée au château de Meltokio (toujours pour Lloyd)", missable: 'yellow' },
+  { char: "Colette", costume: "Mermaid (maillot)", howto: "Event plage Altamira (sélectionnée ou par affection)", missable: 'yellow' },
+  { char: "Colette", costume: "Maid", howto: "Château de Meltokio (Zelos), parler aux servantes près de la bibliothèque", missable: 'yellow' },
+  { char: "Colette", costume: "Fair Lady (soirée)", howto: "Event soirée château Meltokio (être choisie)", missable: 'yellow' },
+  { char: "Genis", costume: "Beach Comber (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Genis", costume: "Katz", howto: "Event lié aux Katz dans les bas-fonds de Meltokio", missable: 'yellow' },
+  { char: "Genis", costume: "Easter Sunday (soirée)", howto: "Event soirée château Meltokio (être choisi)", missable: 'yellow' },
+  { char: "Raine", costume: "No, Not the Sun! (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Raine", costume: "Maiden", howto: "Event de la dalle de pierre aux ruines d'Asgard", missable: 'yellow' },
+  { char: "Raine", costume: "Glamorous Beauty (soirée)", howto: "Event soirée château Meltokio", missable: 'yellow' },
+  { char: "Sheena", costume: "Queen of the Beach (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Sheena", costume: "Successor (ninja)", howto: "Compléter les events de Mizuho", missable: 'yellow' },
+  { char: "Sheena", costume: "You Look Great (soirée)", howto: "Event soirée château Meltokio", missable: 'yellow' },
+  { char: "Zelos", costume: "Pickup Artist (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Zelos", costume: "Masked Swordsman", howto: "Event chez Zelos à Meltokio", missable: 'yellow' },
+  { char: "Zelos", costume: "Narcissist (soirée)", howto: "Event soirée château Meltokio", missable: 'yellow' },
+  { char: "Presea", costume: "First Timer at Sea (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Presea", costume: "Dream Traveler (Klonoa)", howto: "Event parc d'attractions d'Altamira", missable: 'yellow' },
+  { char: "Presea", costume: "Little Madam (soirée)", howto: "Event soirée château Meltokio", missable: 'yellow' },
+  { char: "Regal", costume: "Swimmer (maillot)", howto: "Event plage Altamira", missable: 'yellow' },
+  { char: "Regal", costume: "God of the Kitchen (chef)", howto: "Duel Dark Chef à Meltokio", missable: 'yellow' },
+  { char: "Regal", costume: "Dandy (soirée)", howto: "Event soirée château Meltokio", missable: 'yellow' },
+];
+const DOGS = {
+  summary: "Pour le titre « Dog Lover » de Colette : parler à tous les chiens du jeu avec Colette en perso à l'écran (drapeau rouge / leader dans le menu). Récupère-les à la 1ère visite de chaque ville car plusieurs sont dans des zones missables. Titre remis chez Dirk après les avoir tous nommés.",
+  count: "~30-32 chiens selon les sources (le guide Steam en liste 32). Le titre n'est donné qu'après les avoir TOUS nommés.",
+  special: "Kenny (Altamira) seulement la nuit ; Lucky (Luin) seulement après reconstruction de Luin.",
+  locations: ["Iselia","Triet","Izoold","Hima","Asgard","House of Salvation (×3)","Palmacosta 🔴","Thoda/ponton 🔴","Luin (après reconstruction)","Meltokio","Sybak","Ozette 🔴","Mizuho","Flanoir","Altamira (nuit)","Heimdall 🔴","Exire"],
+};
+
+// Helper slug pour générer des ids stables
+function slug(s) { return String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); }
+
+// IDs stables attachés aux data trackables (titres, recettes, summons, costumes)
+TITLES.forEach(t => { t.id = 'title_' + slug(t.char) + '_' + slug(t.title); });
+RECIPES.forEach(r => { r.id = 'recipe_' + slug(r.name); });
+SUMMON_SPIRITS.forEach(s => { s.id = 'summon_' + slug(s.name); });
+COSTUMES.forEach(c => { c.id = 'costume_' + slug(c.char) + '_' + slug(c.costume); });
 
 // ============================================================
 // STATE & PERSISTENCE
@@ -852,12 +1052,37 @@ function renderChecklist() {
     ? ITEMS.slice()
     : ITEMS.filter(i => isAvailableInPhase(i, state.currentPhase));
 
-  // Progression globale
+  // Overview multi-catégories (toutes les sections cochables)
+  const cats = [
+    { lbl: 'Checklist', ids: ITEMS.map(i => i.id) },
+    { lbl: "Wonder Chef", ids: WONDER_CHEFS.map(w => w.id) },
+    { lbl: "Recettes", ids: RECIPES.map(r => r.id) },
+    { lbl: "Devil's Arms", ids: DEVIL_ARMS.map(a => a.id), custom: () => DEVIL_ARMS.filter(a => state.arms[a.id]?.found).length },
+    { lbl: 'Titres', ids: TITLES.map(t => t.id) },
+    { lbl: 'Summons', ids: SUMMON_SPIRITS.map(s => s.id) },
+    { lbl: 'Costumes', ids: COSTUMES.map(c => c.id) },
+  ];
+  const ovCard = el('div', { class: 'card' });
+  ovCard.appendChild(el('h2', {}, 'Progression globale'));
+  const ovGrid = el('div', { class: 'overview-grid' });
+  cats.forEach(c => {
+    const d = c.custom ? c.custom() : c.ids.filter(id => state.checked[id]).length;
+    const t = c.ids.length;
+    const cell = el('div', { class: 'ov-cell' + (d === t && t > 0 ? ' done' : '') },
+      el('div', { class: 'ov-num' }, `${d}/${t}`),
+      el('div', { class: 'ov-lbl' }, c.lbl)
+    );
+    ovGrid.appendChild(cell);
+  });
+  ovCard.appendChild(ovGrid);
+  root.appendChild(ovCard);
+
+  // Progression de la checklist (filtrée par phase ci-dessous)
   const total = ITEMS.length;
   const done  = ITEMS.filter(i => state.checked[i.id]).length;
   const pct   = total ? Math.round((done / total) * 100) : 0;
   const progress = el('div', { class: 'card tight' },
-    el('div', { class: 'note' }, `Progression globale : ${done} / ${total} (${pct}%)`),
+    el('div', { class: 'note' }, `Checklist : ${done} / ${total} (${pct}%)`),
     el('div', { class: 'progress-bar' }, el('div', { style: `width:${pct}%` }))
   );
   root.appendChild(progress);
@@ -1030,8 +1255,45 @@ function renderTabContent(id) {
   if (id === 'affection')  renderAffection();
   if (id === 'arms')       renderArms();
   if (id === 'cuisine')    renderCuisine();
-  if (id === 'reference')  renderReference();
+  if (id === 'titres')     renderTitles();
+  if (id === 'combat')     renderCombat();
+  if (id === 'summons')    renderSummons();
+  if (id === 'codex')      renderReference();
   if (id === 'settings')   renderSettings();
+}
+
+// Liste cochable générique partageant state.checked par id
+function renderCheckRow(id, mainText, opts) {
+  opts = opts || {};
+  const checked = !!state.checked[id];
+  const cb = el('input', { type: 'checkbox' });
+  cb.checked = checked;
+  const row = el('div', { class: 'item' + (checked ? ' done' : '') });
+  cb.addEventListener('change', () => {
+    if (cb.checked) state.checked[id] = true;
+    else delete state.checked[id];
+    saveState();
+    row.classList.toggle('done', cb.checked);
+    if (opts.onChange) opts.onChange();
+  });
+  const body = el('div', { class: 'body' });
+  const nameLine = el('div', { class: 'name' }, mainText);
+  if (opts.tags) nameLine.appendChild(opts.tags);
+  body.appendChild(nameLine);
+  if (opts.tagsBelow) body.appendChild(opts.tagsBelow);
+  if (opts.meta) body.appendChild(el('div', { class: 'meta' }, opts.meta));
+  if (opts.notes) body.appendChild(el('div', { class: 'notes' }, opts.notes));
+  row.appendChild(cb);
+  row.appendChild(body);
+  return row;
+}
+function countChecked(ids) { return ids.filter(id => state.checked[id]).length; }
+function miniProgress(done, total) {
+  const pct = total ? Math.round(done / total * 100) : 0;
+  return el('div', { class: 'card tight' },
+    el('div', { class: 'note' }, `${done} / ${total} (${pct}%)`),
+    el('div', { class: 'progress-bar' }, el('div', { style: `width:${pct}%` }))
+  );
 }
 
 // ============================================================
@@ -1227,14 +1489,211 @@ function renderCuisine() {
   cardSkits.appendChild(el('h2', {}, 'Skits — bulles d\'oreille'));
   cardSkits.appendChild(el('div', {}, '+60 points en moyenne, +120 pour Presea, +180 pour Regal.'));
   root.appendChild(cardSkits);
+
+  // Livre de recettes (cochable)
+  const ids = RECIPES.map(r => r.id);
+  const recCard = el('div', { class: 'card' });
+  recCard.appendChild(el('h2', {}, `Livre de recettes (${RECIPES.length})`));
+  recCard.appendChild(el('div', { class: 'note' }, "Maîtriser TOUTES les recettes débloque les titres « Chef » de chaque perso. Coche au fur et à mesure."));
+  recCard.appendChild(miniProgress(countChecked(ids), ids.length));
+  RECIPES.forEach(r => {
+    const row = renderCheckRow(r.id, r.name, {
+      meta: '🧂 ' + r.ingredients.join(', '),
+      notes: `${r.effect} · obtenue : ${r.source}`,
+      onChange: () => renderCuisine()
+    });
+    recCard.appendChild(row);
+  });
+  root.appendChild(recCard);
+
+  // Wonder Chefs (cochable, avec localisations exactes)
+  const wcIds = WONDER_CHEFS.map(w => w.id);
+  const wcCard = el('div', { class: 'card' });
+  wcCard.appendChild(el('h2', {}, `Wonder Chef — emplacements (${WONDER_CHEFS.length})`));
+  wcCard.appendChild(el('div', { class: 'note' }, "Les 24 recettes = ces 23 Wonder Chef + Sandwich (départ). Récupère vite ceux des villes détruites."));
+  wcCard.appendChild(miniProgress(countChecked(wcIds), wcIds.length));
+  WONDER_CHEFS.forEach(w => {
+    const tags = el('span', {});
+    if (w.missable !== 'green') tags.appendChild(missableTag(w.missable));
+    if (w.cutoff) tags.appendChild(el('span', { class: 'tag red' }, w.cutoff === 'd1' ? 'Cutoff D1' : 'Cutoff D2'));
+    tags.appendChild(el('span', { class: 'tag phase' }, phaseName(w.phase)));
+    const row = renderCheckRow(w.id, `${w.city} → ${w.recipe}`, {
+      tagsBelow: tags,
+      meta: '📍 ' + w.location,
+      notes: 'Déguisement : ' + w.disguise,
+      onChange: () => renderCuisine()
+    });
+    wcCard.appendChild(row);
+  });
+  root.appendChild(wcCard);
+}
+
+// ============================================================
+// TITRES (par perso, cochable)
+// ============================================================
+function renderTitles() {
+  const root = document.getElementById('section-titres');
+  root.innerHTML = '';
+
+  const allIds = TITLES.map(t => t.id);
+  const head = el('div', { class: 'card' });
+  head.appendChild(el('h2', {}, `Titres notables & missables (${TITLES.length})`));
+  head.appendChild(el('div', { class: 'note' }, "Sélection des titres importants/missables (sur ~150 au total). 🔴 = perdu sur la save, 🟡 = récup NG+. Plusieurs titres « Niveau 100 » et « Chef » sont garantis."));
+  head.appendChild(miniProgress(countChecked(allIds), allIds.length));
+  root.appendChild(head);
+
+  // Groupé par perso
+  const order = ["Lloyd","Colette","Genis","Raine","Sheena","Zelos","Presea","Regal","Kratos"];
+  order.forEach(charName => {
+    const list = TITLES.filter(t => t.char === charName);
+    if (!list.length) return;
+    const card = el('div', { class: 'card' });
+    const ids = list.map(t => t.id);
+    card.appendChild(el('h2', {}, `${charName} (${countChecked(ids)}/${ids.length})`));
+    list.forEach(t => {
+      const tags = el('span', {});
+      if (t.missable !== 'green') tags.appendChild(missableTag(t.missable));
+      if (t.bonus && t.bonus !== '+0 stats' && !t.bonus.startsWith('(')) tags.appendChild(el('span', { class: 'tag green' }, t.bonus));
+      const row = renderCheckRow(t.id, t.title, {
+        tagsBelow: tags,
+        notes: t.howto,
+        onChange: () => renderTitles()
+      });
+      card.appendChild(row);
+    });
+    root.appendChild(card);
+  });
+}
+
+// ============================================================
+// COMBAT — Mystic Artes + Compound EX Skills + reco
+// ============================================================
+function renderCombat() {
+  const root = document.getElementById('section-combat');
+  root.innerHTML = '';
+
+  // Mystic Artes
+  const maCard = el('div', { class: 'card' });
+  maCard.appendChild(el('h2', {}, `Mystic Artes (${MYSTIC_ARTES.length})`));
+  maCard.appendChild(el('div', { class: 'note' }, "Conditions de déblocage. Spoiler late-game flouté tant que « Spoil OK » est off."));
+  MYSTIC_ARTES.forEach(m => {
+    const c = el('div', { class: 'arm-card' });
+    c.appendChild(el('div', { class: 'arm-name' }, `${m.name} — ${m.char}`));
+    if (!state.spoilersOk) {
+      c.appendChild(el('div', { class: 'loc' }, spoilerSpan(m.req)));
+    } else {
+      c.appendChild(el('div', { class: 'loc' }, m.req));
+    }
+    maCard.appendChild(c);
+  });
+  root.appendChild(maCard);
+
+  // Compound EX skills
+  const exCard = el('div', { class: 'card' });
+  exCard.appendChild(el('h2', {}, 'Compound EX Skills utiles'));
+  COMPOUND_EX.forEach(s => {
+    const c = el('div', { class: 'arm-card' });
+    c.appendChild(el('div', { class: 'arm-name' }, s.name));
+    c.appendChild(el('div', { class: 'arm-owner' }, 'Composants : ' + s.components));
+    c.appendChild(el('div', { class: 'loc' }, s.effect));
+    c.appendChild(el('div', { class: 'loc', style: 'opacity:0.7' }, 'Pour : ' + s.forChar));
+    exCard.appendChild(c);
+  });
+  root.appendChild(exCard);
+
+  // EX reco + notes (réutilise data existante)
+  const recoCard = el('div', { class: 'card' });
+  recoCard.appendChild(el('h2', {}, 'EX Skills & EX Gems'));
+  EX_SKILLS_NOTES.forEach(n => recoCard.appendChild(el('div', { class: 'note', style: 'margin:4px 0' }, '• ' + n)));
+  recoCard.appendChild(el('h3', {}, 'Reco arbres (1ère run)'));
+  const exTable = el('table', { class: 'cuisine-table' });
+  exTable.appendChild(el('thead', {}, el('tr', {}, el('th', {}, 'Perso'), el('th', {}, 'Reco'), el('th', {}, 'Note'))));
+  const exTbody = el('tbody');
+  EX_SKILLS_RECO.forEach(r => {
+    exTbody.appendChild(el('tr', {}, el('td', {}, r.char), el('td', { class: 'likes' }, r.reco), el('td', {}, r.note)));
+  });
+  exTable.appendChild(exTbody);
+  recoCard.appendChild(exTable);
+  root.appendChild(recoCard);
+}
+
+// ============================================================
+// SUMMONS — Summon Spirits (cochable)
+// ============================================================
+function renderSummons() {
+  const root = document.getElementById('section-summons');
+  root.innerHTML = '';
+
+  const ids = SUMMON_SPIRITS.map(s => s.id);
+  const head = el('div', { class: 'card' });
+  head.appendChild(el('h2', {}, `Summon Spirits (${SUMMON_SPIRITS.length})`));
+  head.appendChild(el('div', { class: 'note' }, "Pactes de Sheena. Maxwell est optionnel (à faire avant le point de non-retour). Noms de boss floutés tant que « Spoil OK » est off."));
+  head.appendChild(miniProgress(countChecked(ids), ids.length));
+  root.appendChild(head);
+
+  const card = el('div', { class: 'card' });
+  SUMMON_SPIRITS.forEach(s => {
+    const tags = el('span', {});
+    tags.appendChild(el('span', { class: 'tag type' }, s.element));
+    if (s.optional) tags.appendChild(el('span', { class: 'tag yellow' }, 'Optionnel'));
+    if (s.missable !== 'green') tags.appendChild(missableTag(s.missable));
+    const bossNode = el('div', { class: 'meta' });
+    bossNode.appendChild(document.createTextNode('⚔️ Boss : '));
+    if (!state.spoilersOk) bossNode.appendChild(spoilerSpan(s.boss));
+    else bossNode.appendChild(document.createTextNode(s.boss));
+    const row = renderCheckRow(s.id, s.name, {
+      tagsBelow: tags,
+      meta: '📍 ' + s.location,
+      onChange: () => renderSummons()
+    });
+    row.querySelector('.body').appendChild(bossNode);
+    row.querySelector('.body').appendChild(el('div', { class: 'notes' }, s.notes));
+    card.appendChild(row);
+  });
+  root.appendChild(card);
 }
 
 // ============================================================
 // RÉFÉRENCE — EX Skills, Grade Shop, ordre des sceaux, sources
 // ============================================================
 function renderReference() {
-  const root = document.getElementById('section-reference');
+  const root = document.getElementById('section-codex');
   root.innerHTML = '';
+
+  // Figurines
+  const figCard = el('div', { class: 'card' });
+  figCard.appendChild(el('h2', {}, 'Figurines'));
+  figCard.appendChild(el('div', {}, el('strong', {}, FIGURINES.total)));
+  figCard.appendChild(el('div', { style: 'margin-top:6px' }, FIGURINES.how));
+  figCard.appendChild(el('div', { class: 'note', style: 'margin-top:6px' }, '📍 ' + FIGURINES.where));
+  figCard.appendChild(el('div', { class: 'tag red', style: 'display:block;margin-top:8px;padding:8px' }, FIGURINES.warning));
+  root.appendChild(figCard);
+
+  // Costumes (cochable)
+  const costIds = COSTUMES.map(c => c.id);
+  const costCard = el('div', { class: 'card' });
+  costCard.appendChild(el('h2', {}, `Costumes (${COSTUMES.length})`));
+  costCard.appendChild(el('div', { class: 'note' }, "Maillots = event plage d'Altamira ; tenues de soirée = château de Meltokio. La plupart sont récupérables en NG+."));
+  costCard.appendChild(miniProgress(countChecked(costIds), costIds.length));
+  COSTUMES.forEach(c => {
+    const row = renderCheckRow(c.id, `${c.char} · ${c.costume}`, {
+      notes: c.howto,
+      onChange: () => renderReference()
+    });
+    costCard.appendChild(row);
+  });
+  root.appendChild(costCard);
+
+  // Chiens (Dog Lover)
+  const dogCard = el('div', { class: 'card' });
+  dogCard.appendChild(el('h2', {}, 'Chiens — titre Dog Lover (Colette)'));
+  dogCard.appendChild(el('div', {}, DOGS.summary));
+  dogCard.appendChild(el('div', { class: 'note', style: 'margin-top:6px' }, DOGS.count));
+  dogCard.appendChild(el('div', { class: 'note', style: 'margin-top:4px' }, '⏰ ' + DOGS.special));
+  const dogUl = el('ul');
+  DOGS.locations.forEach(l => dogUl.appendChild(el('li', {}, l)));
+  dogCard.appendChild(dogUl);
+  root.appendChild(dogCard);
 
   // EX Skills
   const exCard = el('div', { class: 'card' });
@@ -1333,10 +1792,7 @@ function renderSettings() {
     saveState();
     applySpoilerMode();
     renderSettings();
-    // Re-render des onglets qui contiennent du spoiler
-    if (state.currentTab === 'affection') renderAffection();
-    if (state.currentTab === 'arms')      renderArms();
-    if (state.currentTab === 'reference') renderReference();
+    document.getElementById('spoilerToggle').checked = state.spoilersOk;
   });
   spoilerRow.appendChild(sBtn);
   card.appendChild(spoilerRow);
@@ -1452,10 +1908,18 @@ const SEARCH_INDEX = (() => {
   });
   WONDER_CHEFS.forEach(wc => {
     idx.push({
-      label: `Recette : ${wc.recipe} (${wc.city})`,
-      sub: `Wonder Chef · ${wc.location}`,
+      label: `Wonder Chef : ${wc.city} → ${wc.recipe}`,
+      sub: `${wc.location}`,
+      type: 'wonderchef',
+      action: () => setTab('cuisine')
+    });
+  });
+  RECIPES.forEach(r => {
+    idx.push({
+      label: `Recette : ${r.name}`,
+      sub: `${r.effect} · ${r.source}`,
       type: 'recipe',
-      action: () => focusItem({ id: wc.id })
+      action: () => setTab('cuisine')
     });
   });
   DEVIL_ARMS.forEach(da => {
@@ -1463,7 +1927,39 @@ const SEARCH_INDEX = (() => {
       label: `${da.name} (${da.weapon}) — ${da.owner}`,
       sub: `Devil's Arm · ${da.location}`,
       type: 'devilarm',
-      action: () => { setTab('arms'); }
+      action: () => setTab('arms')
+    });
+  });
+  TITLES.forEach(t => {
+    idx.push({
+      label: `Titre : ${t.title} (${t.char})`,
+      sub: `${t.howto}`,
+      type: 'title',
+      action: () => setTab('titres')
+    });
+  });
+  SUMMON_SPIRITS.forEach(s => {
+    idx.push({
+      label: `Summon : ${s.name}`,
+      sub: `${s.element} · ${s.location}`,
+      type: 'summon',
+      action: () => setTab('summons')
+    });
+  });
+  MYSTIC_ARTES.forEach(m => {
+    idx.push({
+      label: `Mystic Arte : ${m.name} (${m.char})`,
+      sub: 'Combat',
+      type: 'mystic',
+      action: () => setTab('combat')
+    });
+  });
+  COSTUMES.forEach(c => {
+    idx.push({
+      label: `Costume : ${c.costume} (${c.char})`,
+      sub: `${c.howto}`,
+      type: 'costume',
+      action: () => setTab('codex')
     });
   });
   CUISINE_PREFS.forEach(p => {
@@ -1471,7 +1967,7 @@ const SEARCH_INDEX = (() => {
       label: `Cuisine : ${p.char}`,
       sub: `Aime ${p.likes} · déteste ${p.dislikes}`,
       type: 'cuisine',
-      action: () => { setTab('cuisine'); }
+      action: () => setTab('cuisine')
     });
   });
   return idx;
@@ -1586,10 +2082,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.spoilersOk = cb.checked;
     saveState();
     applySpoilerMode();
-    if (state.currentTab === 'affection') renderAffection();
-    if (state.currentTab === 'arms')      renderArms();
-    if (state.currentTab === 'reference') renderReference();
-    if (state.currentTab === 'settings')  renderSettings();
+    renderTabContent(state.currentTab);
   });
 
   setupTabs();
